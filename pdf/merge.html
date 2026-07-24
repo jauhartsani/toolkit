@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gabung PDF Online — Merge Banyak File PDF Jadi Satu</title>
+  <meta name="description" content="Gabungkan beberapa file PDF menjadi satu dokumen berurutan langsung di browser, tanpa upload ke server.">
+  <link rel="canonical" href="https://tools-kamu.com/pdf/merge.html">
+  <meta name="robots" content="index, follow">
+  <meta property="og:title" content="Gabung PDF Online — Merge Banyak File PDF Jadi Satu">
+  <meta property="og:description" content="Gabungkan beberapa file PDF menjadi satu dokumen berurutan langsung di browser, tanpa upload ke server.">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><rect width=%2232%22 height=%2232%22 rx=%228%22 fill=%22%232F6FED%22/></svg>">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+  <header class="tk-header">
+    <div class="tk-header-inner">
+      <a href="../index.html" class="tk-logo">
+        <span class="tk-logo-mark" aria-hidden="true"></span>
+        <span>Toolkit<small>ALL-IN-ONE UTILITIES</small></span>
+      </a>
+      <nav class="tk-nav" id="tk-nav">
+          <a href="../compress/compress-jpg.html">Compress</a>
+          <a href="../pdf/merge.html">PDF</a>
+          <a href="../convert/jpg-to-png.html">Convert</a>
+          <a href="../qr/text.html">QR Code</a>
+          <a href="../text/word-counter.html">Text</a>
+          <a href="../dev/json-formatter.html">Dev</a>
+          <a href="../calc/discount-tax.html">Calculator</a>
+          <a href="../random/password.html">Random</a>
+      </nav>
+    </div>
+  </header>
+  <div class="tk-breadcrumb">
+    <a href="../index.html">Home</a> / <a href="../pdf/merge.html">PDF Tools</a> / <span style="color:var(--ink)">Merge PDF</span>
+  </div>
+
+  <main class="tk-main">
+    <div class="tk-hero">
+      <div class="spec-plate">
+            <span><i class="spec-dot"></i>CLIENT-SIDE</span>
+            <span class="spec-io">MULTI .PDF → 1 .PDF</span>
+            <span>NO UPLOAD</span>
+          </div>
+      <h1>Gabung PDF Online</h1>
+      <p>Gabungkan beberapa file PDF menjadi satu dokumen berurutan langsung di browser, tanpa upload ke server.</p>
+    </div>
+
+    <div id="adsense-banner-top" class="ad-slot">Advertisement Slot</div>
+
+    <div class="panel">
+      <div class="dropzone" id="dz">
+        <div class="dz-icon">↑</div>
+        <strong>Klik atau seret beberapa file PDF ke sini</strong>
+        <div class="dz-sub">Bisa pilih lebih dari satu file sekaligus</div>
+      </div>
+      <input type="file" id="fileInput" accept="application/pdf" multiple style="display:none;">
+
+      <div id="fileList" style="margin-top:14px;"></div>
+
+      <button class="btn btn-primary btn-block" id="runBtn" style="margin-top:22px;" disabled>Gabungkan PDF</button>
+      <p id="statusMsg" style="font-size:12.5px;color:var(--slate-soft);margin-top:8px;"></p>
+
+    </div>
+
+    <div id="adsense-banner-bottom" class="ad-slot">Advertisement Slot</div>
+  </main>
+  <footer class="tk-footer">
+    <div class="tk-footer-inner">
+      <span>© 2026 Toolkit — every tool runs locally in your browser. Files are never uploaded.</span>
+      <span class="font-mono" style="font-size:11px;">v1.0 · client-side</span>
+    </div>
+  </footer>
+
+  <script src="../assets/js/common.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+  <script>
+    const dz = document.getElementById('dz');
+    const fileInput = document.getElementById('fileInput');
+    const fileListEl = document.getElementById('fileList');
+    const runBtn = document.getElementById('runBtn');
+    const statusMsg = document.getElementById('statusMsg');
+    let files = [];
+
+    dz.addEventListener('click', () => fileInput.click());
+    dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
+    dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
+    dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('drag'); addFiles([...e.dataTransfer.files]); });
+    fileInput.addEventListener('change', e => addFiles([...e.target.files]));
+
+    function addFiles(newFiles) {
+      files = files.concat(newFiles.filter(f => f.type === 'application/pdf'));
+      renderList();
+      runBtn.disabled = files.length < 2;
+    }
+
+    function renderList() {
+      fileListEl.innerHTML = files.map((f, i) => `
+        <div class="file-chip">
+          <span class="fc-icon">${i + 1}</span>
+          <span class="fc-name">${f.name} — ${formatBytes(f.size)}</span>
+          <button class="fc-remove" data-idx="${i}" title="Hapus">×</button>
+        </div>`).join('');
+      fileListEl.querySelectorAll('.fc-remove').forEach(btn => {
+        btn.addEventListener('click', () => { files.splice(Number(btn.dataset.idx), 1); renderList(); runBtn.disabled = files.length < 2; });
+      });
+      if (files.length && files.length < 2) statusMsg.textContent = 'Tambahkan minimal 2 file PDF untuk digabungkan.';
+      else statusMsg.textContent = '';
+    }
+
+    runBtn.addEventListener('click', () => { runBtn.disabled = true; runWithAd(() => processMerge()); });
+
+    async function processMerge() {
+      statusMsg.textContent = 'Menggabungkan halaman…';
+      const merged = await PDFLib.PDFDocument.create();
+      for (const f of files) {
+        const bytes = await f.arrayBuffer();
+        const src = await PDFLib.PDFDocument.load(bytes);
+        const pages = await merged.copyPages(src, src.getPageIndices());
+        pages.forEach(p => merged.addPage(p));
+      }
+      const outBytes = await merged.save();
+      const blob = new Blob([outBytes], { type: 'application/pdf' });
+      statusMsg.textContent = 'Selesai — ' + files.length + ' file digabung menjadi 1 PDF.';
+      triggerDownload(blob, 'merged.pdf');
+      runBtn.disabled = false;
+    }
+  </script>
+
+</body>
+</html>

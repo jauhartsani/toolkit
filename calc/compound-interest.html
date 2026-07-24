@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kalkulator Bunga Majemuk Online — Simulasi Investasi</title>
+  <meta name="description" content="Simulasikan pertumbuhan investasi dengan bunga majemuk (compound interest) berdasarkan modal, bunga, dan jangka waktu.">
+  <link rel="canonical" href="https://tools-kamu.com/calc/compound-interest.html">
+  <meta name="robots" content="index, follow">
+  <meta property="og:title" content="Kalkulator Bunga Majemuk Online — Simulasi Investasi">
+  <meta property="og:description" content="Simulasikan pertumbuhan investasi dengan bunga majemuk (compound interest) berdasarkan modal, bunga, dan jangka waktu.">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><rect width=%2232%22 height=%2232%22 rx=%228%22 fill=%22%232F6FED%22/></svg>">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+  <header class="tk-header">
+    <div class="tk-header-inner">
+      <a href="../index.html" class="tk-logo">
+        <span class="tk-logo-mark" aria-hidden="true"></span>
+        <span>Toolkit<small>ALL-IN-ONE UTILITIES</small></span>
+      </a>
+      <nav class="tk-nav" id="tk-nav">
+          <a href="../compress/compress-jpg.html">Compress</a>
+          <a href="../pdf/merge.html">PDF</a>
+          <a href="../convert/jpg-to-png.html">Convert</a>
+          <a href="../qr/text.html">QR Code</a>
+          <a href="../text/word-counter.html">Text</a>
+          <a href="../dev/json-formatter.html">Dev</a>
+          <a href="../calc/discount-tax.html">Calculator</a>
+          <a href="../random/password.html">Random</a>
+      </nav>
+    </div>
+  </header>
+  <div class="tk-breadcrumb">
+    <a href="../index.html">Home</a> / <a href="../calc/discount-tax.html">Calculator</a> / <span style="color:var(--ink)">Compound Interest Calculator</span>
+  </div>
+
+  <main class="tk-main">
+    <div class="tk-hero">
+      <div class="spec-plate">
+            <span><i class="spec-dot"></i>CLIENT-SIDE</span>
+            <span class="spec-io">PRINCIPAL + RATE → PROJECTED TOTAL</span>
+            <span>SIMULATION</span>
+          </div>
+      <h1>Kalkulator Bunga Majemuk Online</h1>
+      <p>Simulasikan pertumbuhan investasi dengan bunga majemuk (compound interest) berdasarkan modal, bunga, dan jangka waktu.</p>
+    </div>
+
+    <div id="adsense-banner-top" class="ad-slot">Advertisement Slot</div>
+
+    <div class="panel">
+      <label class="field-label">Modal Awal (Rp)</label>
+      <input type="number" id="principal" placeholder="1000000" min="0">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:14px;">
+        <div>
+          <label class="field-label">Bunga per Tahun (%)</label>
+          <input type="number" id="rate" placeholder="5" min="0" step="0.1">
+        </div>
+        <div>
+          <label class="field-label">Lama Investasi (tahun)</label>
+          <input type="number" id="years" placeholder="10" min="1">
+        </div>
+      </div>
+      <div style="margin-top:14px;">
+        <label class="field-label">Frekuensi Bunga Majemuk</label>
+        <select id="freq">
+          <option value="1">Tahunan</option>
+          <option value="12" selected>Bulanan</option>
+          <option value="4">Kuartalan</option>
+          <option value="365">Harian</option>
+        </select>
+      </div>
+      <button class="btn btn-primary btn-block" id="calcBtn" style="margin-top:20px;">Simulasikan</button>
+
+      <div id="resultWrap" style="display:none; margin-top:20px;">
+        <div class="result-row"><span>Modal Awal</span><span class="font-mono" id="rPrincipal">—</span></div>
+        <div class="result-row"><span>Total Bunga Didapat</span><span class="font-mono" style="color:var(--good);" id="rInterest">—</span></div>
+        <div class="result-row" style="font-weight:700; font-size:15px;"><span>Total Akhir</span><span class="font-mono" id="rFinal">—</span></div>
+      </div>
+
+    </div>
+
+    <div id="adsense-banner-bottom" class="ad-slot">Advertisement Slot</div>
+  </main>
+  <footer class="tk-footer">
+    <div class="tk-footer-inner">
+      <span>© 2026 Toolkit — every tool runs locally in your browser. Files are never uploaded.</span>
+      <span class="font-mono" style="font-size:11px;">v1.0 · client-side</span>
+    </div>
+  </footer>
+
+  <script src="../assets/js/common.js"></script>
+  <script>
+    function fmtRp(n) { return 'Rp' + n.toLocaleString('id-ID', { maximumFractionDigits: 0 }); }
+    document.getElementById('calcBtn').addEventListener('click', () => runWithAd(() => {
+      const p = Number(document.getElementById('principal').value) || 0;
+      const r = (Number(document.getElementById('rate').value) || 0) / 100;
+      const t = Number(document.getElementById('years').value) || 0;
+      const n = Number(document.getElementById('freq').value) || 1;
+      const final = p * Math.pow(1 + r / n, n * t);
+      const interest = final - p;
+      document.getElementById('rPrincipal').textContent = fmtRp(p);
+      document.getElementById('rInterest').textContent = '+ ' + fmtRp(interest);
+      document.getElementById('rFinal').textContent = fmtRp(final);
+      document.getElementById('resultWrap').style.display = 'block';
+    }));
+  </script>
+
+</body>
+</html>

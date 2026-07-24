@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Generator QR Code WhatsApp Online — Chat Otomatis</title>
+  <meta name="description" content="Buat kode QR yang langsung membuka chat WhatsApp dengan nomor dan pesan otomatis saat dipindai.">
+  <link rel="canonical" href="https://tools-kamu.com/qr/whatsapp.html">
+  <meta name="robots" content="index, follow">
+  <meta property="og:title" content="Generator QR Code WhatsApp Online — Chat Otomatis">
+  <meta property="og:description" content="Buat kode QR yang langsung membuka chat WhatsApp dengan nomor dan pesan otomatis saat dipindai.">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><rect width=%2232%22 height=%2232%22 rx=%228%22 fill=%22%232F6FED%22/></svg>">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+  <header class="tk-header">
+    <div class="tk-header-inner">
+      <a href="../index.html" class="tk-logo">
+        <span class="tk-logo-mark" aria-hidden="true"></span>
+        <span>Toolkit<small>ALL-IN-ONE UTILITIES</small></span>
+      </a>
+      <nav class="tk-nav" id="tk-nav">
+          <a href="../compress/compress-jpg.html">Compress</a>
+          <a href="../pdf/merge.html">PDF</a>
+          <a href="../convert/jpg-to-png.html">Convert</a>
+          <a href="../qr/text.html">QR Code</a>
+          <a href="../text/word-counter.html">Text</a>
+          <a href="../dev/json-formatter.html">Dev</a>
+          <a href="../calc/discount-tax.html">Calculator</a>
+          <a href="../random/password.html">Random</a>
+      </nav>
+    </div>
+  </header>
+  <div class="tk-breadcrumb">
+    <a href="../index.html">Home</a> / <a href="../qr/text.html">QR Generator</a> / <span style="color:var(--ink)">WhatsApp QR</span>
+  </div>
+
+  <main class="tk-main">
+    <div class="tk-hero">
+      <div class="spec-plate">
+            <span><i class="spec-dot"></i>CLIENT-SIDE</span>
+            <span class="spec-io">PHONE + MSG → QR CODE</span>
+            <span>WA DEEPLINK</span>
+          </div>
+      <h1>Generator QR Code WhatsApp Online</h1>
+      <p>Buat kode QR yang langsung membuka chat WhatsApp dengan nomor dan pesan otomatis saat dipindai.</p>
+    </div>
+
+    <div id="adsense-banner-top" class="ad-slot">Advertisement Slot</div>
+
+    <div class="panel">
+      <label class="field-label">Nomor WhatsApp (format internasional, tanpa +)</label>
+      <input type="text" id="qphone" placeholder="6281234567890">
+      <label class="field-label" style="margin-top:14px;">Pesan Otomatis (opsional)</label>
+      <textarea id="qmsg" rows="3" placeholder="Halo, saya ingin bertanya…"></textarea>
+      <button class="btn btn-primary btn-block" id="runBtn" style="margin-top:18px;">Buat QR Code</button>
+            <div id="qrResultWrap" style="display:none; margin-top:24px; text-align:center;">
+        <div style="display:inline-block; padding:18px; background:#fff; border:1px solid var(--line); border-radius:14px;">
+          <canvas id="qrCanvas"></canvas>
+        </div>
+        <div>
+          <button class="btn btn-primary" id="downloadBtn" style="margin-top:16px;">Download QR (PNG)</button>
+        </div>
+      </div>
+
+    </div>
+
+    <div id="adsense-banner-bottom" class="ad-slot">Advertisement Slot</div>
+  </main>
+  <footer class="tk-footer">
+    <div class="tk-footer-inner">
+      <span>© 2026 Toolkit — every tool runs locally in your browser. Files are never uploaded.</span>
+      <span class="font-mono" style="font-size:11px;">v1.0 · client-side</span>
+    </div>
+  </footer>
+
+  <script src="../assets/js/common.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  <script>
+    const runBtn = document.getElementById('runBtn');
+    const qrResultWrap = document.getElementById('qrResultWrap');
+    const canvas = document.getElementById('qrCanvas');
+
+    runBtn.addEventListener('click', () => {
+      const phone = document.getElementById('qphone').value.trim().replace(/[^0-9]/g, '');
+      const msg = document.getElementById('qmsg').value.trim();
+      const qrText = phone ? ('https://wa.me/' + phone + (msg ? '?text=' + encodeURIComponent(msg) : '')) : '';
+      if (!qrText) return;
+      runBtn.disabled = true;
+      runWithAd(() => generateQr(qrText));
+    });
+
+    function generateQr(text) {
+      QRCode.toCanvas(canvas, text, { width: 260, margin: 2, color: { dark: '#14171F', light: '#FFFFFF' } }, err => {
+        if (err) { alert('Gagal membuat QR'); runBtn.disabled = false; return; }
+        qrResultWrap.style.display = 'block';
+        runBtn.disabled = false;
+      });
+    }
+
+    document.getElementById('downloadBtn').addEventListener('click', () => {
+      canvas.toBlob(blob => triggerDownload(blob, 'qrcode.png'));
+    });
+  </script>
+
+</body>
+</html>

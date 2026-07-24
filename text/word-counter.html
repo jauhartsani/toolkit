@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hitung Kata Online — Word Counter Real-Time</title>
+  <meta name="description" content="Hitung jumlah kata, karakter, paragraf, dan estimasi waktu baca secara real-time langsung di browser.">
+  <link rel="canonical" href="https://tools-kamu.com/text/word-counter.html">
+  <meta name="robots" content="index, follow">
+  <meta property="og:title" content="Hitung Kata Online — Word Counter Real-Time">
+  <meta property="og:description" content="Hitung jumlah kata, karakter, paragraf, dan estimasi waktu baca secara real-time langsung di browser.">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><rect width=%2232%22 height=%2232%22 rx=%228%22 fill=%22%232F6FED%22/></svg>">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+  <header class="tk-header">
+    <div class="tk-header-inner">
+      <a href="../index.html" class="tk-logo">
+        <span class="tk-logo-mark" aria-hidden="true"></span>
+        <span>Toolkit<small>ALL-IN-ONE UTILITIES</small></span>
+      </a>
+      <nav class="tk-nav" id="tk-nav">
+          <a href="../compress/compress-jpg.html">Compress</a>
+          <a href="../pdf/merge.html">PDF</a>
+          <a href="../convert/jpg-to-png.html">Convert</a>
+          <a href="../qr/text.html">QR Code</a>
+          <a href="../text/word-counter.html">Text</a>
+          <a href="../dev/json-formatter.html">Dev</a>
+          <a href="../calc/discount-tax.html">Calculator</a>
+          <a href="../random/password.html">Random</a>
+      </nav>
+    </div>
+  </header>
+  <div class="tk-breadcrumb">
+    <a href="../index.html">Home</a> / <a href="../text/word-counter.html">Text Tools</a> / <span style="color:var(--ink)">Word Counter</span>
+  </div>
+
+  <main class="tk-main">
+    <div class="tk-hero">
+      <div class="spec-plate">
+            <span><i class="spec-dot"></i>CLIENT-SIDE</span>
+            <span class="spec-io">TEXT → STATS</span>
+            <span>REAL-TIME</span>
+          </div>
+      <h1>Hitung Kata Online</h1>
+      <p>Hitung jumlah kata, karakter, paragraf, dan estimasi waktu baca secara real-time langsung di browser.</p>
+    </div>
+
+    <div id="adsense-banner-top" class="ad-slot">Advertisement Slot</div>
+
+    <div class="panel">
+      <label class="field-label">Tempel atau ketik teks Anda</label>
+      <textarea id="wtext" rows="10" placeholder="Mulai mengetik atau tempel teks di sini…"></textarea>
+      <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-top:20px;">
+        <div class="panel" style="padding:14px; text-align:center;">
+          <div class="font-mono" style="font-size:22px; font-weight:600;" id="cWords">0</div>
+          <div style="font-size:11px; color:var(--slate-soft); text-transform:uppercase; letter-spacing:.06em;">Kata</div>
+        </div>
+        <div class="panel" style="padding:14px; text-align:center;">
+          <div class="font-mono" style="font-size:22px; font-weight:600;" id="cChars">0</div>
+          <div style="font-size:11px; color:var(--slate-soft); text-transform:uppercase; letter-spacing:.06em;">Karakter</div>
+        </div>
+        <div class="panel" style="padding:14px; text-align:center;">
+          <div class="font-mono" style="font-size:22px; font-weight:600;" id="cParas">0</div>
+          <div style="font-size:11px; color:var(--slate-soft); text-transform:uppercase; letter-spacing:.06em;">Paragraf</div>
+        </div>
+        <div class="panel" style="padding:14px; text-align:center;">
+          <div class="font-mono" style="font-size:22px; font-weight:600;" id="cTime">0 mnt</div>
+          <div style="font-size:11px; color:var(--slate-soft); text-transform:uppercase; letter-spacing:.06em;">Waktu Baca</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div id="adsense-banner-bottom" class="ad-slot">Advertisement Slot</div>
+  </main>
+  <footer class="tk-footer">
+    <div class="tk-footer-inner">
+      <span>© 2026 Toolkit — every tool runs locally in your browser. Files are never uploaded.</span>
+      <span class="font-mono" style="font-size:11px;">v1.0 · client-side</span>
+    </div>
+  </footer>
+
+  <script src="../assets/js/common.js"></script>
+  <script>
+    const wtext = document.getElementById('wtext');
+    const cWords = document.getElementById('cWords');
+    const cChars = document.getElementById('cChars');
+    const cParas = document.getElementById('cParas');
+    const cTime = document.getElementById('cTime');
+
+    function update() {
+      const text = wtext.value;
+      const words = (text.trim().match(/\S+/g) || []).length;
+      const chars = text.length;
+      const paras = text.trim() ? text.split(/\n\s*\n/).filter(p => p.trim().length).length : 0;
+      const minutes = Math.max(0, Math.ceil(words / 200));
+      cWords.textContent = words.toLocaleString('id-ID');
+      cChars.textContent = chars.toLocaleString('id-ID');
+      cParas.textContent = paras.toLocaleString('id-ID');
+      cTime.textContent = (words === 0 ? '0' : minutes) + ' mnt';
+    }
+    wtext.addEventListener('input', update);
+    update();
+  </script>
+
+</body>
+</html>

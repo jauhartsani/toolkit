@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Random Name/Number Picker Online — Alat Undian</title>
+  <meta name="description" content="Acak nama atau angka dari daftar Anda untuk keperluan undian, giveaway, atau pembagian tugas.">
+  <link rel="canonical" href="https://tools-kamu.com/random/picker.html">
+  <meta name="robots" content="index, follow">
+  <meta property="og:title" content="Random Name/Number Picker Online — Alat Undian">
+  <meta property="og:description" content="Acak nama atau angka dari daftar Anda untuk keperluan undian, giveaway, atau pembagian tugas.">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><rect width=%2232%22 height=%2232%22 rx=%228%22 fill=%22%232F6FED%22/></svg>">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+  <header class="tk-header">
+    <div class="tk-header-inner">
+      <a href="../index.html" class="tk-logo">
+        <span class="tk-logo-mark" aria-hidden="true"></span>
+        <span>Toolkit<small>ALL-IN-ONE UTILITIES</small></span>
+      </a>
+      <nav class="tk-nav" id="tk-nav">
+          <a href="../compress/compress-jpg.html">Compress</a>
+          <a href="../pdf/merge.html">PDF</a>
+          <a href="../convert/jpg-to-png.html">Convert</a>
+          <a href="../qr/text.html">QR Code</a>
+          <a href="../text/word-counter.html">Text</a>
+          <a href="../dev/json-formatter.html">Dev</a>
+          <a href="../calc/discount-tax.html">Calculator</a>
+          <a href="../random/password.html">Random</a>
+      </nav>
+    </div>
+  </header>
+  <div class="tk-breadcrumb">
+    <a href="../index.html">Home</a> / <a href="../random/password.html">Random Generators</a> / <span style="color:var(--ink)">Random Picker</span>
+  </div>
+
+  <main class="tk-main">
+    <div class="tk-hero">
+      <div class="spec-plate">
+            <span><i class="spec-dot"></i>CLIENT-SIDE</span>
+            <span class="spec-io">LIST → WINNER(S)</span>
+            <span>NO-REPEAT</span>
+          </div>
+      <h1>Random Name/Number Picker Online</h1>
+      <p>Acak nama atau angka dari daftar Anda untuk keperluan undian, giveaway, atau pembagian tugas.</p>
+    </div>
+
+    <div id="adsense-banner-top" class="ad-slot">Advertisement Slot</div>
+
+    <div class="panel">
+      <label class="field-label">Daftar Nama / Angka (satu per baris)</label>
+      <textarea id="pickList" rows="8" placeholder="Andi\nBudi\nCitra\nDewi"></textarea>
+      <div style="display:grid; grid-template-columns:1fr auto; gap:14px; align-items:end; margin-top:14px;">
+        <div>
+          <label class="field-label">Jumlah Pemenang</label>
+          <input type="number" id="winnerCount" value="1" min="1">
+        </div>
+        <label class="checkline" style="padding-bottom:11px;"><input type="checkbox" id="noRepeat" checked> Tanpa duplikat</label>
+      </div>
+      <button class="btn btn-primary btn-block" id="pickBtn" style="margin-top:20px;">Acak Sekarang</button>
+
+      <div id="resultWrap" style="display:none; margin-top:20px;">
+        <label class="field-label">Hasil</label>
+        <div id="resultList"></div>
+      </div>
+
+    </div>
+
+    <div id="adsense-banner-bottom" class="ad-slot">Advertisement Slot</div>
+  </main>
+  <footer class="tk-footer">
+    <div class="tk-footer-inner">
+      <span>© 2026 Toolkit — every tool runs locally in your browser. Files are never uploaded.</span>
+      <span class="font-mono" style="font-size:11px;">v1.0 · client-side</span>
+    </div>
+  </footer>
+
+  <script src="../assets/js/common.js"></script>
+  <script>
+    document.getElementById('pickBtn').addEventListener('click', () => runWithAd(() => {
+      const items = document.getElementById('pickList').value.split('\n').map(s => s.trim()).filter(Boolean);
+      const count = Math.max(1, Number(document.getElementById('winnerCount').value) || 1);
+      const noRepeat = document.getElementById('noRepeat').checked;
+      if (!items.length) return;
+
+      let winners = [];
+      if (noRepeat) {
+        const pool = [...items];
+        const n = Math.min(count, pool.length);
+        for (let i = 0; i < n; i++) {
+          const idx = Math.floor(Math.random() * pool.length);
+          winners.push(pool.splice(idx, 1)[0]);
+        }
+      } else {
+        for (let i = 0; i < count; i++) winners.push(items[Math.floor(Math.random() * items.length)]);
+      }
+
+      const resultList = document.getElementById('resultList');
+      resultList.innerHTML = winners.map((w, i) => `
+        <div class="file-chip"><span class="fc-icon">#${i + 1}</span><span class="fc-name" style="font-weight:600;">${w}</span></div>
+      `).join('');
+      document.getElementById('resultWrap').style.display = 'block';
+    }));
+  </script>
+
+</body>
+</html>

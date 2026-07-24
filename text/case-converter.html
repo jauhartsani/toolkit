@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Case Converter Online — UPPERCASE, lowercase, Title Case</title>
+  <meta name="description" content="Ubah teks ke UPPERCASE, lowercase, Title Case, atau Sentence case secara instan di browser.">
+  <link rel="canonical" href="https://tools-kamu.com/text/case-converter.html">
+  <meta name="robots" content="index, follow">
+  <meta property="og:title" content="Case Converter Online — UPPERCASE, lowercase, Title Case">
+  <meta property="og:description" content="Ubah teks ke UPPERCASE, lowercase, Title Case, atau Sentence case secara instan di browser.">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><rect width=%2232%22 height=%2232%22 rx=%228%22 fill=%22%232F6FED%22/></svg>">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+  <header class="tk-header">
+    <div class="tk-header-inner">
+      <a href="../index.html" class="tk-logo">
+        <span class="tk-logo-mark" aria-hidden="true"></span>
+        <span>Toolkit<small>ALL-IN-ONE UTILITIES</small></span>
+      </a>
+      <nav class="tk-nav" id="tk-nav">
+          <a href="../compress/compress-jpg.html">Compress</a>
+          <a href="../pdf/merge.html">PDF</a>
+          <a href="../convert/jpg-to-png.html">Convert</a>
+          <a href="../qr/text.html">QR Code</a>
+          <a href="../text/word-counter.html">Text</a>
+          <a href="../dev/json-formatter.html">Dev</a>
+          <a href="../calc/discount-tax.html">Calculator</a>
+          <a href="../random/password.html">Random</a>
+      </nav>
+    </div>
+  </header>
+  <div class="tk-breadcrumb">
+    <a href="../index.html">Home</a> / <a href="../text/word-counter.html">Text Tools</a> / <span style="color:var(--ink)">Case Converter</span>
+  </div>
+
+  <main class="tk-main">
+    <div class="tk-hero">
+      <div class="spec-plate">
+            <span><i class="spec-dot"></i>CLIENT-SIDE</span>
+            <span class="spec-io">TEXT → FORMATTED TEXT</span>
+            <span>4 MODES</span>
+          </div>
+      <h1>Case Converter Online</h1>
+      <p>Ubah teks ke UPPERCASE, lowercase, Title Case, atau Sentence case secara instan di browser.</p>
+    </div>
+
+    <div id="adsense-banner-top" class="ad-slot">Advertisement Slot</div>
+
+    <div class="panel">
+      <label class="field-label">Teks Masukan</label>
+      <textarea id="inText" rows="7" placeholder="Ketik atau tempel teks di sini…"></textarea>
+      <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:16px;">
+        <button class="btn btn-ghost" data-mode="upper">UPPERCASE</button>
+        <button class="btn btn-ghost" data-mode="lower">lowercase</button>
+        <button class="btn btn-ghost" data-mode="title">Title Case</button>
+        <button class="btn btn-ghost" data-mode="sentence">Sentence case</button>
+      </div>
+      <label class="field-label" style="margin-top:20px;">Hasil</label>
+      <textarea id="outText" rows="7" readonly style="background:var(--paper);"></textarea>
+      <button class="btn btn-primary btn-block" id="copyBtn" style="margin-top:14px;">Copy Hasil</button>
+
+    </div>
+
+    <div id="adsense-banner-bottom" class="ad-slot">Advertisement Slot</div>
+  </main>
+  <footer class="tk-footer">
+    <div class="tk-footer-inner">
+      <span>© 2026 Toolkit — every tool runs locally in your browser. Files are never uploaded.</span>
+      <span class="font-mono" style="font-size:11px;">v1.0 · client-side</span>
+    </div>
+  </footer>
+
+  <script src="../assets/js/common.js"></script>
+  <script>
+    const inText = document.getElementById('inText');
+    const outText = document.getElementById('outText');
+
+    function toTitleCase(s) { return s.toLowerCase().replace(/(^|\s|[-'"])\S/g, c => c.toUpperCase()); }
+    function toSentenceCase(s) { return s.toLowerCase().replace(/(^\s*\w|[.!?]\s*\w)/g, c => c.toUpperCase()); }
+
+    document.querySelectorAll('[data-mode]').forEach(btn => {
+      btn.addEventListener('click', () => runWithAd(() => {
+        const mode = btn.dataset.mode;
+        const src = inText.value;
+        let out = src;
+        if (mode === 'upper') out = src.toUpperCase();
+        else if (mode === 'lower') out = src.toLowerCase();
+        else if (mode === 'title') out = toTitleCase(src);
+        else if (mode === 'sentence') out = toSentenceCase(src);
+        outText.value = out;
+      }));
+    });
+
+    document.getElementById('copyBtn').addEventListener('click', () => {
+      if (!outText.value) return;
+      navigator.clipboard.writeText(outText.value);
+      const btn = document.getElementById('copyBtn');
+      const orig = btn.textContent; btn.textContent = 'Tersalin!';
+      setTimeout(() => btn.textContent = orig, 1400);
+    });
+  </script>
+
+</body>
+</html>

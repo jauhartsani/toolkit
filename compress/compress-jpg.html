@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kompres JPG Online — Perkecil Ukuran Foto Tanpa Merusak Warna</title>
+  <meta name="description" content="Kompres file JPG langsung di browser, atur tingkat kompresi dengan slider, dan bandingkan ukuran file sebelum vs sesudah. Tanpa upload ke server.">
+  <link rel="canonical" href="https://tools-kamu.com/compress/compress-jpg.html">
+  <meta name="robots" content="index, follow">
+  <meta property="og:title" content="Kompres JPG Online — Perkecil Ukuran Foto Tanpa Merusak Warna">
+  <meta property="og:description" content="Kompres file JPG langsung di browser, atur tingkat kompresi dengan slider, dan bandingkan ukuran file sebelum vs sesudah. Tanpa upload ke server.">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><rect width=%2232%22 height=%2232%22 rx=%228%22 fill=%22%232F6FED%22/></svg>">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+  <header class="tk-header">
+    <div class="tk-header-inner">
+      <a href="../index.html" class="tk-logo">
+        <span class="tk-logo-mark" aria-hidden="true"></span>
+        <span>Toolkit<small>ALL-IN-ONE UTILITIES</small></span>
+      </a>
+      <nav class="tk-nav" id="tk-nav">
+          <a href="../compress/">Compress</a>
+          <a href="../pdf/">PDF</a>
+          <a href="../convert/">Convert</a>
+          <a href="../qr/">QR Code</a>
+          <a href="../text/">Text</a>
+          <a href="../dev/">Dev</a>
+          <a href="../calc/">Calculator</a>
+          <a href="../random/">Random</a>
+      </nav>
+    </div>
+  </header>
+  <div class="tk-breadcrumb">
+    <a href="../index.html">Home</a> / <a href="../compress/compress-jpg.html">Compress</a> / <span style="color:var(--ink)">Compress JPG</span>
+  </div>
+
+  <main class="tk-main">
+    <div class="tk-hero">
+      <div class="spec-plate">
+            <span><i class="spec-dot"></i>CLIENT-SIDE</span>
+            <span class="spec-io">.JPG → .JPG (compressed)</span>
+            <span>NO UPLOAD</span>
+          </div>
+      <h1>Kompres JPG Online</h1>
+      <p>Kompres file JPG langsung di browser, atur tingkat kompresi dengan slider, dan bandingkan ukuran file sebelum vs sesudah. Tanpa upload ke server.</p>
+    </div>
+
+    <div id="adsense-banner-top" class="ad-slot">Advertisement Slot</div>
+
+    <div class="panel">
+            <div class="dropzone" id="dz">
+        <div class="dz-icon">↑</div>
+        <strong>Klik atau seret file ke sini</strong>
+        <div class="dz-sub">Format: JPG / JPEG</div>
+        <div class="dz-sub" style="margin-top:2px;">Diproses 100% di perangkat Anda — file tidak pernah diunggah ke server.</div>
+      </div>
+      <input type="file" id="fileInput" class="hidden" style="display:none;">
+
+      <div class="file-chip" id="fileChip" style="display:none;">
+        <span class="fc-icon">FILE</span>
+        <span class="fc-name">—</span>
+      </div>
+
+      <div id="sliderWrap" style="display:none; margin-top:22px;">
+        <label class="field-label">Tingkat Kompresi — <span id="qLabel">50%</span></label>
+        <input type="range" id="quality" min="0" max="100" value="50">
+        <p style="font-size:12px;color:var(--slate-soft);margin-top:6px;">Slider rendah = kualitas warna tetap maksimal, slider tinggi = ukuran file makin kecil.</p>
+      </div>
+
+      <button class="btn btn-primary btn-block" id="runBtn" style="margin-top:22px;" disabled>Compress File</button>
+
+      <div id="resultWrap" style="display:none; margin-top:10px;">
+        <div class="stat-compare">
+          <div class="stat"><div class="n" id="sizeBefore">—</div><div class="l">Sebelum</div></div>
+          <div class="arrow">→</div>
+          <div class="stat"><div class="n" id="sizeAfter">—</div><div class="l">Sesudah</div></div>
+        </div>
+        <p style="text-align:center;margin-top:10px;" class="stat-saved" id="savedPct"></p>
+        <img id="preview" style="display:none;max-width:100%;border-radius:10px;margin-top:16px;border:1px solid var(--line);">
+        <button class="btn btn-primary btn-block" id="downloadBtn" style="margin-top:16px;">Download Hasil Kompresi</button>
+      </div>
+
+    </div>
+
+    <div id="adsense-banner-bottom" class="ad-slot">Advertisement Slot</div>
+  </main>
+  <footer class="tk-footer">
+    <div class="tk-footer-inner">
+      <span>© 2026 Toolkit — every tool runs locally in your browser. Files are never uploaded.</span>
+      <span class="font-mono" style="font-size:11px;">v1.0 · client-side</span>
+    </div>
+  </footer>
+
+  <script src="../assets/js/common.js"></script>
+  <script>
+    const dz = document.getElementById('dz');
+    const fileInput = document.getElementById('fileInput');
+    const sliderWrap = document.getElementById('sliderWrap');
+    const slider = document.getElementById('quality');
+    const qLabel = document.getElementById('qLabel');
+    const runBtn = document.getElementById('runBtn');
+    const resultWrap = document.getElementById('resultWrap');
+    const preview = document.getElementById('preview');
+    const fileChip = document.getElementById('fileChip');
+    let currentFile = null, outputBlob = null;
+
+    dz.addEventListener('click', () => fileInput.click());
+    dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
+    dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
+    dz.addEventListener('drop', e => {
+      e.preventDefault(); dz.classList.remove('drag');
+      if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+    });
+    fileInput.addEventListener('change', e => { if (e.target.files[0]) handleFile(e.target.files[0]); });
+
+    function handleFile(file) {
+      currentFile = file;
+      sliderWrap.style.display = 'block';
+      runBtn.disabled = false;
+      fileChip.style.display = 'flex';
+      fileChip.querySelector('.fc-name').textContent = file.name + ' — ' + formatBytes(file.size);
+      const reader = new FileReader();
+      reader.onload = ev => { preview.src = ev.target.result; preview.style.display = 'block'; };
+      reader.readAsDataURL(file);
+      resultWrap.style.display = 'none';
+    }
+
+    slider.addEventListener('input', () => { qLabel.textContent = slider.value + '%'; });
+
+    runBtn.addEventListener('click', () => {
+      if (!currentFile) return;
+      runBtn.disabled = true;
+      runWithAd(() => processCompress());
+    });
+
+    function processCompress() {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        // slider: 0 = minimal compression, 100 = maximum compression
+        const level = Number(slider.value) / 100;
+        const quality = Math.max(0.05, 1 - level * 0.9); // maps to encoder quality
+        canvas.toBlob(blob => {
+          outputBlob = blob;
+          document.getElementById('sizeBefore').textContent = formatBytes(currentFile.size);
+          document.getElementById('sizeAfter').textContent = formatBytes(blob.size);
+          const savedPct = Math.max(0, Math.round((1 - blob.size / currentFile.size) * 100));
+          document.getElementById('savedPct').textContent = savedPct + '% lebih kecil';
+          resultWrap.style.display = 'block';
+          runBtn.disabled = false;
+        }, 'image/jpeg', quality);
+      };
+      img.src = preview.src;
+    }
+
+    document.getElementById('downloadBtn').addEventListener('click', () => {
+      if (!outputBlob) return;
+      const base = currentFile.name.replace(/\.[^.]+$/, '');
+      triggerDownload(outputBlob, base + '-compressed.jpg');
+    });
+  </script>
+
+</body>
+</html>

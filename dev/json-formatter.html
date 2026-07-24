@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JSON Formatter Online — Beautify, Minify & Validate</title>
+  <meta name="description" content="Rapikan (beautify), kecilkan (minify), dan validasi kode JSON secara instan di browser, gratis dan tanpa upload.">
+  <link rel="canonical" href="https://tools-kamu.com/dev/json-formatter.html">
+  <meta name="robots" content="index, follow">
+  <meta property="og:title" content="JSON Formatter Online — Beautify, Minify & Validate">
+  <meta property="og:description" content="Rapikan (beautify), kecilkan (minify), dan validasi kode JSON secara instan di browser, gratis dan tanpa upload.">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><rect width=%2232%22 height=%2232%22 rx=%228%22 fill=%22%232F6FED%22/></svg>">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+  <header class="tk-header">
+    <div class="tk-header-inner">
+      <a href="../index.html" class="tk-logo">
+        <span class="tk-logo-mark" aria-hidden="true"></span>
+        <span>Toolkit<small>ALL-IN-ONE UTILITIES</small></span>
+      </a>
+      <nav class="tk-nav" id="tk-nav">
+          <a href="../compress/compress-jpg.html">Compress</a>
+          <a href="../pdf/merge.html">PDF</a>
+          <a href="../convert/jpg-to-png.html">Convert</a>
+          <a href="../qr/text.html">QR Code</a>
+          <a href="../text/word-counter.html">Text</a>
+          <a href="../dev/json-formatter.html">Dev</a>
+          <a href="../calc/discount-tax.html">Calculator</a>
+          <a href="../random/password.html">Random</a>
+      </nav>
+    </div>
+  </header>
+  <div class="tk-breadcrumb">
+    <a href="../index.html">Home</a> / <a href="../dev/json-formatter.html">Dev Tools</a> / <span style="color:var(--ink)">JSON Formatter</span>
+  </div>
+
+  <main class="tk-main">
+    <div class="tk-hero">
+      <div class="spec-plate">
+            <span><i class="spec-dot"></i>CLIENT-SIDE</span>
+            <span class="spec-io">JSON → FORMATTED JSON</span>
+            <span>VALIDATOR</span>
+          </div>
+      <h1>JSON Formatter Online</h1>
+      <p>Rapikan (beautify), kecilkan (minify), dan validasi kode JSON secara instan di browser, gratis dan tanpa upload.</p>
+    </div>
+
+    <div id="adsense-banner-top" class="ad-slot">Advertisement Slot</div>
+
+    <div class="panel">
+      <label class="field-label">JSON Masukan</label>
+      <textarea id="inJson" rows="10" placeholder='{"nama": "budi", "aktif": true}'></textarea>
+      <div style="display:flex; gap:10px; margin-top:14px; flex-wrap:wrap;">
+        <button class="btn btn-primary" id="beautifyBtn">Beautify</button>
+        <button class="btn btn-ghost" id="minifyBtn">Minify</button>
+        <button class="btn btn-ghost" id="validateBtn">Validate</button>
+      </div>
+      <p id="statusMsg" style="font-size:13px; margin-top:10px;"></p>
+      <label class="field-label" style="margin-top:16px;">Hasil</label>
+      <textarea id="outJson" rows="10" readonly style="background:var(--paper); font-family:'JetBrains Mono',monospace; font-size:13px;"></textarea>
+      <button class="btn btn-ghost btn-block" id="copyBtn" style="margin-top:14px;">Copy Hasil</button>
+
+    </div>
+
+    <div id="adsense-banner-bottom" class="ad-slot">Advertisement Slot</div>
+  </main>
+  <footer class="tk-footer">
+    <div class="tk-footer-inner">
+      <span>© 2026 Toolkit — every tool runs locally in your browser. Files are never uploaded.</span>
+      <span class="font-mono" style="font-size:11px;">v1.0 · client-side</span>
+    </div>
+  </footer>
+
+  <script src="../assets/js/common.js"></script>
+  <script>
+    const inJson = document.getElementById('inJson');
+    const outJson = document.getElementById('outJson');
+    const statusMsg = document.getElementById('statusMsg');
+
+    function withParsed(fn) {
+      try {
+        const parsed = JSON.parse(inJson.value);
+        fn(parsed);
+        statusMsg.innerHTML = '<span class="badge">VALID JSON</span>';
+      } catch (err) {
+        statusMsg.innerHTML = `<span style="color:var(--danger); font-family:monospace; font-size:12.5px;">Invalid JSON — ${err.message}</span>`;
+        outJson.value = '';
+      }
+    }
+
+    document.getElementById('beautifyBtn').addEventListener('click', () => runWithAd(() => withParsed(p => outJson.value = JSON.stringify(p, null, 2))));
+    document.getElementById('minifyBtn').addEventListener('click', () => runWithAd(() => withParsed(p => outJson.value = JSON.stringify(p))));
+    document.getElementById('validateBtn').addEventListener('click', () => withParsed(() => {}));
+
+    document.getElementById('copyBtn').addEventListener('click', () => {
+      if (!outJson.value) return;
+      navigator.clipboard.writeText(outJson.value);
+      const btn = document.getElementById('copyBtn');
+      const orig = btn.textContent; btn.textContent = 'Tersalin!';
+      setTimeout(() => btn.textContent = orig, 1400);
+    });
+  </script>
+
+</body>
+</html>

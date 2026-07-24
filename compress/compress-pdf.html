@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kompres PDF Online — Perkecil Ukuran Dokumen PDF</title>
+  <meta name="description" content="Kompres file PDF langsung di browser dengan rasterisasi & optimasi grafis per halaman. Tanpa upload, gratis, dan aman.">
+  <link rel="canonical" href="https://tools-kamu.com/compress/compress-pdf.html">
+  <meta name="robots" content="index, follow">
+  <meta property="og:title" content="Kompres PDF Online — Perkecil Ukuran Dokumen PDF">
+  <meta property="og:description" content="Kompres file PDF langsung di browser dengan rasterisasi & optimasi grafis per halaman. Tanpa upload, gratis, dan aman.">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><rect width=%2232%22 height=%2232%22 rx=%228%22 fill=%22%232F6FED%22/></svg>">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+  <header class="tk-header">
+    <div class="tk-header-inner">
+      <a href="../index.html" class="tk-logo">
+        <span class="tk-logo-mark" aria-hidden="true"></span>
+        <span>Toolkit<small>ALL-IN-ONE UTILITIES</small></span>
+      </a>
+      <nav class="tk-nav" id="tk-nav">
+          <a href="../compress/">Compress</a><a href="../pdf/">PDF</a><a href="../convert/">Convert</a><a href="../qr/">QR Code</a><a href="../text/">Text</a><a href="../dev/">Dev</a><a href="../calc/">Calculator</a><a href="../random/">Random</a>
+      </nav>
+    </div>
+  </header>
+  <div class="tk-breadcrumb">
+    <a href="../index.html">Home</a> / <a href="../compress/compress-jpg.html">Compress</a> / <span style="color:var(--ink)">Compress PDF</span>
+  </div>
+
+  <main class="tk-main">
+    <div class="tk-hero">
+      <div class="spec-plate">
+            <span><i class="spec-dot"></i>CLIENT-SIDE</span>
+            <span class="spec-io">.PDF → .PDF (compressed)</span>
+            <span>RASTERIZED</span>
+          </div>
+      <h1>Kompres PDF Online</h1>
+      <p>Kompres file PDF langsung di browser dengan rasterisasi & optimasi grafis per halaman. Tanpa upload, gratis, dan aman.</p>
+    </div>
+
+    <div id="adsense-banner-top" class="ad-slot">Advertisement Slot</div>
+
+    <div class="panel">
+      <div class="dropzone" id="dz">
+        <div class="dz-icon">↑</div>
+        <strong>Klik atau seret file PDF ke sini</strong>
+        <div class="dz-sub">Format: PDF</div>
+        <div class="dz-sub" style="margin-top:2px;">Setiap halaman dirasterisasi ulang di browser Anda untuk memperkecil ukuran file.</div>
+      </div>
+      <input type="file" id="fileInput" accept="application/pdf" style="display:none;">
+      <div class="file-chip" id="fileChip" style="display:none;">
+        <span class="fc-icon">PDF</span>
+        <span class="fc-name">—</span>
+      </div>
+
+      <div id="sliderWrap" style="display:none; margin-top:22px;">
+        <label class="field-label">Tingkat Kompresi — <span id="qLabel">50%</span></label>
+        <input type="range" id="quality" min="0" max="100" value="50">
+        <p style="font-size:12px;color:var(--slate-soft);margin-top:6px;">Slider tinggi = resolusi & kualitas gambar halaman diturunkan lebih agresif demi ukuran file lebih kecil.</p>
+      </div>
+
+      <button class="btn btn-primary btn-block" id="runBtn" style="margin-top:22px;" disabled>Compress PDF</button>
+      <p id="statusMsg" style="font-size:12.5px;color:var(--slate-soft);margin-top:8px;"></p>
+
+      <div id="resultWrap" style="display:none; margin-top:10px;">
+        <div class="stat-compare">
+          <div class="stat"><div class="n" id="sizeBefore">—</div><div class="l">Sebelum</div></div>
+          <div class="arrow">→</div>
+          <div class="stat"><div class="n" id="sizeAfter">—</div><div class="l">Sesudah</div></div>
+        </div>
+        <p style="text-align:center;margin-top:10px;" class="stat-saved" id="savedPct"></p>
+        <button class="btn btn-primary btn-block" id="downloadBtn" style="margin-top:16px;">Download PDF Terkompresi</button>
+      </div>
+
+    </div>
+
+    <div id="adsense-banner-bottom" class="ad-slot">Advertisement Slot</div>
+  </main>
+  <footer class="tk-footer">
+    <div class="tk-footer-inner">
+      <span>© 2026 Toolkit — every tool runs locally in your browser. Files are never uploaded.</span>
+      <span class="font-mono" style="font-size:11px;">v1.0 · client-side</span>
+    </div>
+  </footer>
+
+  <script src="../assets/js/common.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+  <script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    const dz = document.getElementById('dz');
+    const fileInput = document.getElementById('fileInput');
+    const runBtn = document.getElementById('runBtn');
+    const sliderWrap = document.getElementById('sliderWrap');
+    const slider = document.getElementById('quality');
+    const qLabel = document.getElementById('qLabel');
+    const fileChip = document.getElementById('fileChip');
+    const statusMsg = document.getElementById('statusMsg');
+    const resultWrap = document.getElementById('resultWrap');
+    let currentFile = null, outputBlob = null;
+
+    dz.addEventListener('click', () => fileInput.click());
+    dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
+    dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
+    dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('drag'); if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); });
+    fileInput.addEventListener('change', e => { if (e.target.files[0]) handleFile(e.target.files[0]); });
+    slider.addEventListener('input', () => { qLabel.textContent = slider.value + '%'; });
+
+    function handleFile(file) {
+      currentFile = file;
+      sliderWrap.style.display = 'block';
+      runBtn.disabled = false;
+      fileChip.style.display = 'flex';
+      fileChip.querySelector('.fc-name').textContent = file.name + ' — ' + formatBytes(file.size);
+      resultWrap.style.display = 'none';
+    }
+
+    runBtn.addEventListener('click', () => { runBtn.disabled = true; runWithAd(() => processPdf()); });
+
+    async function processPdf() {
+      statusMsg.textContent = 'Merender & mengompres halaman…';
+      const level = Number(slider.value) / 100;
+      const scale = Math.max(0.5, 1.6 - level * 1.1);
+      const jpgQuality = Math.max(0.15, 1 - level * 0.8);
+
+      const arrayBuf = await currentFile.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuf.slice(0) }).promise;
+      const newPdf = await PDFLib.PDFDocument.create();
+
+      for (let i = 1; i <= pdf.numPages; i++) {
+        statusMsg.textContent = `Memproses halaman ${i} dari ${pdf.numPages}…`;
+        const page = await pdf.getPage(i);
+        const viewport = page.getViewport({ scale });
+        const canvas = document.createElement('canvas');
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        const ctx = canvas.getContext('2d');
+        await page.render({ canvasContext: ctx, viewport }).promise;
+        const jpgDataUrl = canvas.toDataURL('image/jpeg', jpgQuality);
+        const jpgBytes = await fetch(jpgDataUrl).then(r => r.arrayBuffer());
+        const embeddedImg = await newPdf.embedJpg(jpgBytes);
+        const newPage = newPdf.addPage([viewport.width, viewport.height]);
+        newPage.drawImage(embeddedImg, { x: 0, y: 0, width: viewport.width, height: viewport.height });
+      }
+
+      const outBytes = await newPdf.save();
+      outputBlob = new Blob([outBytes], { type: 'application/pdf' });
+      document.getElementById('sizeBefore').textContent = formatBytes(currentFile.size);
+      document.getElementById('sizeAfter').textContent = formatBytes(outputBlob.size);
+      const savedPct = Math.max(0, Math.round((1 - outputBlob.size / currentFile.size) * 100));
+      document.getElementById('savedPct').textContent = savedPct + '% lebih kecil';
+      statusMsg.textContent = 'Selesai.';
+      resultWrap.style.display = 'block';
+      runBtn.disabled = false;
+    }
+
+    document.getElementById('downloadBtn').addEventListener('click', () => {
+      if (!outputBlob) return;
+      const base = currentFile.name.replace(/\.[^.]+$/, '');
+      triggerDownload(outputBlob, base + '-compressed.pdf');
+    });
+  </script>
+
+</body>
+</html>

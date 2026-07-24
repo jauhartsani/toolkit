@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tanda Tangan PDF Online — E-Sign Dokumen di Browser</title>
+  <meta name="description" content="Gambar tanda tangan Anda dengan mouse atau layar sentuh, lalu tempelkan ke halaman PDF mana pun. Diproses lokal, tanpa upload.">
+  <link rel="canonical" href="https://tools-kamu.com/pdf/sign.html">
+  <meta name="robots" content="index, follow">
+  <meta property="og:title" content="Tanda Tangan PDF Online — E-Sign Dokumen di Browser">
+  <meta property="og:description" content="Gambar tanda tangan Anda dengan mouse atau layar sentuh, lalu tempelkan ke halaman PDF mana pun. Diproses lokal, tanpa upload.">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><rect width=%2232%22 height=%2232%22 rx=%228%22 fill=%22%232F6FED%22/></svg>">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+  <header class="tk-header">
+    <div class="tk-header-inner">
+      <a href="../index.html" class="tk-logo">
+        <span class="tk-logo-mark" aria-hidden="true"></span>
+        <span>Toolkit<small>ALL-IN-ONE UTILITIES</small></span>
+      </a>
+      <nav class="tk-nav" id="tk-nav">
+          <a href="../compress/compress-jpg.html">Compress</a>
+          <a href="../pdf/merge.html">PDF</a>
+          <a href="../convert/jpg-to-png.html">Convert</a>
+          <a href="../qr/text.html">QR Code</a>
+          <a href="../text/word-counter.html">Text</a>
+          <a href="../dev/json-formatter.html">Dev</a>
+          <a href="../calc/discount-tax.html">Calculator</a>
+          <a href="../random/password.html">Random</a>
+      </nav>
+    </div>
+  </header>
+  <div class="tk-breadcrumb">
+    <a href="../index.html">Home</a> / <a href="../pdf/merge.html">PDF Tools</a> / <span style="color:var(--ink)">Sign PDF</span>
+  </div>
+
+  <main class="tk-main">
+    <div class="tk-hero">
+      <div class="spec-plate">
+            <span><i class="spec-dot"></i>CLIENT-SIDE</span>
+            <span class="spec-io">1 .PDF → .PDF + SIGNATURE</span>
+            <span>CANVAS PAD</span>
+          </div>
+      <h1>Tanda Tangan PDF Online</h1>
+      <p>Gambar tanda tangan Anda dengan mouse atau layar sentuh, lalu tempelkan ke halaman PDF mana pun. Diproses lokal, tanpa upload.</p>
+    </div>
+
+    <div id="adsense-banner-top" class="ad-slot">Advertisement Slot</div>
+
+    <div class="panel">
+      <div class="dropzone" id="dz">
+        <div class="dz-icon">↑</div>
+        <strong>Klik atau seret file PDF ke sini</strong>
+        <div class="dz-sub">Format: PDF</div>
+      </div>
+      <input type="file" id="fileInput" accept="application/pdf" style="display:none;">
+
+      <div id="editorWrap" style="display:none; margin-top:20px;">
+        <label class="field-label">1. Gambar tanda tangan Anda</label>
+        <div style="border:1.5px dashed var(--line); border-radius:10px; background:var(--paper); overflow:hidden;">
+          <canvas id="sigPad" width="480" height="160" style="width:100%; touch-action:none; cursor:crosshair;"></canvas>
+        </div>
+        <div style="display:flex; gap:10px; margin-top:8px;">
+          <button class="btn btn-ghost btn-sm" id="clearSig">Hapus Tanda Tangan</button>
+        </div>
+
+        <div style="margin-top:22px; display:flex; gap:12px; align-items:end; flex-wrap:wrap;">
+          <div>
+            <label class="field-label">Halaman</label>
+            <select id="pageSelect"></select>
+          </div>
+          <div>
+            <label class="field-label">Ukuran Tanda Tangan</label>
+            <input type="range" id="sigSize" min="60" max="260" value="140">
+          </div>
+        </div>
+
+        <label class="field-label" style="margin-top:16px;">2. Klik di halaman untuk menempatkan tanda tangan</label>
+        <div style="border:1px solid var(--line); border-radius:10px; overflow:auto; max-height:520px; background:var(--paper);">
+          <div style="position:relative; display:inline-block;" id="canvasWrap">
+            <canvas id="pdfCanvas"></canvas>
+            <img id="sigPreview" style="display:none; position:absolute; pointer-events:none; opacity:0.9;">
+          </div>
+        </div>
+      </div>
+
+      <button class="btn btn-primary btn-block" id="runBtn" style="margin-top:22px;" disabled>Tempelkan Tanda Tangan & Download</button>
+      <p id="statusMsg" style="font-size:12.5px;color:var(--slate-soft);margin-top:8px;"></p>
+
+    </div>
+
+    <div id="adsense-banner-bottom" class="ad-slot">Advertisement Slot</div>
+  </main>
+  <footer class="tk-footer">
+    <div class="tk-footer-inner">
+      <span>© 2026 Toolkit — every tool runs locally in your browser. Files are never uploaded.</span>
+      <span class="font-mono" style="font-size:11px;">v1.0 · client-side</span>
+    </div>
+  </footer>
+
+  <script src="../assets/js/common.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";</script>
+  <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+  <script>
+    const dz = document.getElementById('dz');
+    const fileInput = document.getElementById('fileInput');
+    const editorWrap = document.getElementById('editorWrap');
+    const sigPad = document.getElementById('sigPad');
+    const sigCtx = sigPad.getContext('2d');
+    const clearSig = document.getElementById('clearSig');
+    const canvas = document.getElementById('pdfCanvas');
+    const sigPreview = document.getElementById('sigPreview');
+    const pageSelect = document.getElementById('pageSelect');
+    const sigSize = document.getElementById('sigSize');
+    const runBtn = document.getElementById('runBtn');
+    const statusMsg = document.getElementById('statusMsg');
+    let currentFile = null, pdfDoc = null, currentPageNum = 1, renderScale = 1.3, pageHeightPt = 0;
+    let clickPoint = null, drawing = false, hasSig = false;
+
+    sigCtx.lineWidth = 2.4; sigCtx.lineCap = 'round'; sigCtx.strokeStyle = '#14171F';
+
+    function posFromEvent(e) {
+      const rect = sigPad.getBoundingClientRect();
+      const cx = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+      const cy = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+      return { x: cx * (sigPad.width / rect.width), y: cy * (sigPad.height / rect.height) };
+    }
+    function start(e) { drawing = true; hasSig = true; const p = posFromEvent(e); sigCtx.beginPath(); sigCtx.moveTo(p.x, p.y); e.preventDefault(); }
+    function move(e) { if (!drawing) return; const p = posFromEvent(e); sigCtx.lineTo(p.x, p.y); sigCtx.stroke(); updateSigPreview(); e.preventDefault(); }
+    function end() { drawing = false; }
+    sigPad.addEventListener('mousedown', start); sigPad.addEventListener('mousemove', move); window.addEventListener('mouseup', end);
+    sigPad.addEventListener('touchstart', start); sigPad.addEventListener('touchmove', move); sigPad.addEventListener('touchend', end);
+    clearSig.addEventListener('click', () => { sigCtx.clearRect(0, 0, sigPad.width, sigPad.height); hasSig = false; sigPreview.style.display = 'none'; });
+
+    function updateSigPreview() {
+      if (clickPoint) sigPreview.src = sigPad.toDataURL('image/png');
+    }
+
+    dz.addEventListener('click', () => fileInput.click());
+    dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
+    dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
+    dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('drag'); if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); });
+    fileInput.addEventListener('change', e => { if (e.target.files[0]) handleFile(e.target.files[0]); });
+
+    async function handleFile(file) {
+      currentFile = file;
+      const bytes = await file.arrayBuffer();
+      pdfDoc = await pdfjsLib.getDocument({ data: bytes.slice(0) }).promise;
+      pageSelect.innerHTML = '';
+      for (let i = 1; i <= pdfDoc.numPages; i++) {
+        const opt = document.createElement('option');
+        opt.value = i; opt.textContent = 'Halaman ' + i;
+        pageSelect.appendChild(opt);
+      }
+      editorWrap.style.display = 'block';
+      await renderPage(1);
+    }
+
+    pageSelect.addEventListener('change', () => renderPage(Number(pageSelect.value)));
+
+    async function renderPage(num) {
+      currentPageNum = num;
+      const page = await pdfDoc.getPage(num);
+      const viewport = page.getViewport({ scale: renderScale });
+      canvas.width = viewport.width; canvas.height = viewport.height;
+      pageHeightPt = page.getViewport({ scale: 1 }).height;
+      const ctx = canvas.getContext('2d');
+      await page.render({ canvasContext: ctx, viewport }).promise;
+      sigPreview.style.display = 'none';
+      clickPoint = null;
+      runBtn.disabled = true;
+    }
+
+    canvas.addEventListener('click', e => {
+      if (!hasSig) { statusMsg.textContent = 'Gambar tanda tangan Anda terlebih dahulu.'; return; }
+      const rect = canvas.getBoundingClientRect();
+      const xCss = e.clientX - rect.left;
+      const yCss = e.clientY - rect.top;
+      const wCss = Number(sigSize.value);
+      const hCss = wCss * (sigPad.height / sigPad.width);
+      sigPreview.style.left = (xCss - wCss / 2) + 'px';
+      sigPreview.style.top = (yCss - hCss / 2) + 'px';
+      sigPreview.style.width = wCss + 'px';
+      sigPreview.style.height = hCss + 'px';
+      sigPreview.src = sigPad.toDataURL('image/png');
+      sigPreview.style.display = 'block';
+
+      const xPdf = (xCss / canvas.clientWidth) * (canvas.width / renderScale);
+      const yPdfFromTop = (yCss / canvas.clientHeight) * (canvas.height / renderScale);
+      const wPdf = (wCss / canvas.clientWidth) * (canvas.width / renderScale);
+      const hPdf = wPdf * (sigPad.height / sigPad.width);
+      clickPoint = { x: xPdf - wPdf / 2, y: (pageHeightPt - yPdfFromTop) - hPdf / 2, w: wPdf, h: hPdf };
+      runBtn.disabled = false;
+      statusMsg.textContent = '';
+    });
+
+    runBtn.addEventListener('click', () => {
+      if (!clickPoint) return;
+      runBtn.disabled = true;
+      runWithAd(() => processSign());
+    });
+
+    async function processSign() {
+      statusMsg.textContent = 'Menempelkan tanda tangan…';
+      const sigPngDataUrl = sigPad.toDataURL('image/png');
+      const sigBytes = await fetch(sigPngDataUrl).then(r => r.arrayBuffer());
+      const bytes = await currentFile.arrayBuffer();
+      const doc = await PDFLib.PDFDocument.load(bytes);
+      const sigImage = await doc.embedPng(sigBytes);
+      const page = doc.getPages()[currentPageNum - 1];
+      page.drawImage(sigImage, { x: clickPoint.x, y: clickPoint.y, width: clickPoint.w, height: clickPoint.h });
+      const outBytes = await doc.save();
+      const blob = new Blob([outBytes], { type: 'application/pdf' });
+      const base = currentFile.name.replace(/\.[^.]+$/, '');
+      statusMsg.textContent = 'Selesai.';
+      triggerDownload(blob, base + '-signed.pdf');
+      runBtn.disabled = false;
+    }
+  </script>
+
+</body>
+</html>

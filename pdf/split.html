@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Split PDF Online — Pisahkan Halaman PDF Sesuai Rentang</title>
+  <meta name="description" content="Pisahkan file PDF berdasarkan rentang halaman tertentu menjadi file baru, langsung di browser tanpa upload.">
+  <link rel="canonical" href="https://tools-kamu.com/pdf/split.html">
+  <meta name="robots" content="index, follow">
+  <meta property="og:title" content="Split PDF Online — Pisahkan Halaman PDF Sesuai Rentang">
+  <meta property="og:description" content="Pisahkan file PDF berdasarkan rentang halaman tertentu menjadi file baru, langsung di browser tanpa upload.">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><rect width=%2232%22 height=%2232%22 rx=%228%22 fill=%22%232F6FED%22/></svg>">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+  <header class="tk-header">
+    <div class="tk-header-inner">
+      <a href="../index.html" class="tk-logo">
+        <span class="tk-logo-mark" aria-hidden="true"></span>
+        <span>Toolkit<small>ALL-IN-ONE UTILITIES</small></span>
+      </a>
+      <nav class="tk-nav" id="tk-nav">
+          <a href="../compress/compress-jpg.html">Compress</a>
+          <a href="../pdf/merge.html">PDF</a>
+          <a href="../convert/jpg-to-png.html">Convert</a>
+          <a href="../qr/text.html">QR Code</a>
+          <a href="../text/word-counter.html">Text</a>
+          <a href="../dev/json-formatter.html">Dev</a>
+          <a href="../calc/discount-tax.html">Calculator</a>
+          <a href="../random/password.html">Random</a>
+      </nav>
+    </div>
+  </header>
+  <div class="tk-breadcrumb">
+    <a href="../index.html">Home</a> / <a href="../pdf/merge.html">PDF Tools</a> / <span style="color:var(--ink)">Split PDF</span>
+  </div>
+
+  <main class="tk-main">
+    <div class="tk-hero">
+      <div class="spec-plate">
+            <span><i class="spec-dot"></i>CLIENT-SIDE</span>
+            <span class="spec-io">1 .PDF → RANGE .PDF</span>
+            <span>NO UPLOAD</span>
+          </div>
+      <h1>Split PDF Online</h1>
+      <p>Pisahkan file PDF berdasarkan rentang halaman tertentu menjadi file baru, langsung di browser tanpa upload.</p>
+    </div>
+
+    <div id="adsense-banner-top" class="ad-slot">Advertisement Slot</div>
+
+    <div class="panel">
+      <div class="dropzone" id="dz">
+        <div class="dz-icon">↑</div>
+        <strong>Klik atau seret satu file PDF ke sini</strong>
+        <div class="dz-sub">Format: PDF</div>
+      </div>
+      <input type="file" id="fileInput" accept="application/pdf" style="display:none;">
+      <div class="file-chip" id="fileChip" style="display:none;"><span class="fc-icon">PDF</span><span class="fc-name">—</span></div>
+
+      <div id="rangeWrap" style="display:none; margin-top:22px;">
+        <label class="field-label" id="pageInfo">Rentang Halaman</label>
+        <div style="display:flex; gap:12px;">
+          <input type="number" id="pageFrom" min="1" value="1" placeholder="Dari">
+          <input type="number" id="pageTo" min="1" value="1" placeholder="Sampai">
+        </div>
+        <p style="font-size:12px;color:var(--slate-soft);margin-top:6px;">Contoh: dari halaman 1 sampai 3 akan menghasilkan file baru berisi 3 halaman tersebut.</p>
+      </div>
+
+      <button class="btn btn-primary btn-block" id="runBtn" style="margin-top:22px;" disabled>Pisahkan PDF</button>
+      <p id="statusMsg" style="font-size:12.5px;color:var(--slate-soft);margin-top:8px;"></p>
+
+    </div>
+
+    <div id="adsense-banner-bottom" class="ad-slot">Advertisement Slot</div>
+  </main>
+  <footer class="tk-footer">
+    <div class="tk-footer-inner">
+      <span>© 2026 Toolkit — every tool runs locally in your browser. Files are never uploaded.</span>
+      <span class="font-mono" style="font-size:11px;">v1.0 · client-side</span>
+    </div>
+  </footer>
+
+  <script src="../assets/js/common.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+  <script>
+    const dz = document.getElementById('dz');
+    const fileInput = document.getElementById('fileInput');
+    const fileChip = document.getElementById('fileChip');
+    const rangeWrap = document.getElementById('rangeWrap');
+    const pageInfo = document.getElementById('pageInfo');
+    const pageFrom = document.getElementById('pageFrom');
+    const pageTo = document.getElementById('pageTo');
+    const runBtn = document.getElementById('runBtn');
+    const statusMsg = document.getElementById('statusMsg');
+    let currentFile = null, totalPages = 0;
+
+    dz.addEventListener('click', () => fileInput.click());
+    dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
+    dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
+    dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('drag'); if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); });
+    fileInput.addEventListener('change', e => { if (e.target.files[0]) handleFile(e.target.files[0]); });
+
+    async function handleFile(file) {
+      currentFile = file;
+      fileChip.style.display = 'flex';
+      fileChip.querySelector('.fc-name').textContent = file.name + ' — ' + formatBytes(file.size);
+      const bytes = await file.arrayBuffer();
+      const doc = await PDFLib.PDFDocument.load(bytes);
+      totalPages = doc.getPageCount();
+      pageInfo.textContent = `Rentang Halaman (dokumen memiliki ${totalPages} halaman)`;
+      pageFrom.max = totalPages; pageTo.max = totalPages; pageTo.value = totalPages;
+      rangeWrap.style.display = 'block';
+      runBtn.disabled = false;
+    }
+
+    runBtn.addEventListener('click', () => { runBtn.disabled = true; runWithAd(() => processSplit()); });
+
+    async function processSplit() {
+      let from = Math.max(1, Number(pageFrom.value) || 1);
+      let to = Math.min(totalPages, Number(pageTo.value) || totalPages);
+      if (from > to) [from, to] = [to, from];
+      statusMsg.textContent = `Mengekstrak halaman ${from}–${to}…`;
+
+      const bytes = await currentFile.arrayBuffer();
+      const src = await PDFLib.PDFDocument.load(bytes);
+      const out = await PDFLib.PDFDocument.create();
+      const indices = [];
+      for (let i = from; i <= to; i++) indices.push(i - 1);
+      const pages = await out.copyPages(src, indices);
+      pages.forEach(p => out.addPage(p));
+
+      const outBytes = await out.save();
+      const blob = new Blob([outBytes], { type: 'application/pdf' });
+      const base = currentFile.name.replace(/\.[^.]+$/, '');
+      statusMsg.textContent = 'Selesai.';
+      triggerDownload(blob, `${base}-p${from}-${to}.pdf`);
+      runBtn.disabled = false;
+    }
+  </script>
+
+</body>
+</html>

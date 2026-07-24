@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Base64 Encoder & Decoder Online — Gratis</title>
+  <meta name="description" content="Encode teks ke Base64 atau decode Base64 kembali ke teks asli, langsung di browser tanpa upload.">
+  <link rel="canonical" href="https://tools-kamu.com/dev/base64.html">
+  <meta name="robots" content="index, follow">
+  <meta property="og:title" content="Base64 Encoder & Decoder Online — Gratis">
+  <meta property="og:description" content="Encode teks ke Base64 atau decode Base64 kembali ke teks asli, langsung di browser tanpa upload.">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><rect width=%2232%22 height=%2232%22 rx=%228%22 fill=%22%232F6FED%22/></svg>">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+  <header class="tk-header">
+    <div class="tk-header-inner">
+      <a href="../index.html" class="tk-logo">
+        <span class="tk-logo-mark" aria-hidden="true"></span>
+        <span>Toolkit<small>ALL-IN-ONE UTILITIES</small></span>
+      </a>
+      <nav class="tk-nav" id="tk-nav">
+          <a href="../compress/compress-jpg.html">Compress</a>
+          <a href="../pdf/merge.html">PDF</a>
+          <a href="../convert/jpg-to-png.html">Convert</a>
+          <a href="../qr/text.html">QR Code</a>
+          <a href="../text/word-counter.html">Text</a>
+          <a href="../dev/json-formatter.html">Dev</a>
+          <a href="../calc/discount-tax.html">Calculator</a>
+          <a href="../random/password.html">Random</a>
+      </nav>
+    </div>
+  </header>
+  <div class="tk-breadcrumb">
+    <a href="../index.html">Home</a> / <a href="../dev/json-formatter.html">Dev Tools</a> / <span style="color:var(--ink)">Base64 Encoder/Decoder</span>
+  </div>
+
+  <main class="tk-main">
+    <div class="tk-hero">
+      <div class="spec-plate">
+            <span><i class="spec-dot"></i>CLIENT-SIDE</span>
+            <span class="spec-io">TEXT ⇄ BASE64 → ENCODED/DECODED</span>
+            <span>INSTANT</span>
+          </div>
+      <h1>Base64 Encoder & Decoder Online</h1>
+      <p>Encode teks ke Base64 atau decode Base64 kembali ke teks asli, langsung di browser tanpa upload.</p>
+    </div>
+
+    <div id="adsense-banner-top" class="ad-slot">Advertisement Slot</div>
+
+    <div class="panel">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;" id="b64grid">
+        <div>
+          <label class="field-label">Teks Biasa</label>
+          <textarea id="plainText" rows="9" placeholder="Ketik teks di sini…"></textarea>
+        </div>
+        <div>
+          <label class="field-label">Base64</label>
+          <textarea id="b64Text" rows="9" placeholder="Ketik atau tempel Base64 di sini…"></textarea>
+        </div>
+      </div>
+      <div style="display:flex; gap:10px; margin-top:16px; flex-wrap:wrap;">
+        <button class="btn btn-primary" id="encodeBtn">Encode → Base64</button>
+        <button class="btn btn-ghost" id="decodeBtn">Decode → Teks</button>
+      </div>
+      <p id="statusMsg" style="font-size:12.5px; color:var(--danger); margin-top:10px;"></p>
+      <style>@media (max-width:640px){ #b64grid{ grid-template-columns:1fr; } }</style>
+
+    </div>
+
+    <div id="adsense-banner-bottom" class="ad-slot">Advertisement Slot</div>
+  </main>
+  <footer class="tk-footer">
+    <div class="tk-footer-inner">
+      <span>© 2026 Toolkit — every tool runs locally in your browser. Files are never uploaded.</span>
+      <span class="font-mono" style="font-size:11px;">v1.0 · client-side</span>
+    </div>
+  </footer>
+
+  <script src="../assets/js/common.js"></script>
+  <script>
+    const plainText = document.getElementById('plainText');
+    const b64Text = document.getElementById('b64Text');
+    const statusMsg = document.getElementById('statusMsg');
+
+    document.getElementById('encodeBtn').addEventListener('click', () => runWithAd(() => {
+      try {
+        b64Text.value = btoa(unescape(encodeURIComponent(plainText.value)));
+        statusMsg.textContent = '';
+      } catch (e) { statusMsg.textContent = 'Gagal encode teks.'; }
+    }));
+    document.getElementById('decodeBtn').addEventListener('click', () => runWithAd(() => {
+      try {
+        plainText.value = decodeURIComponent(escape(atob(b64Text.value)));
+        statusMsg.textContent = '';
+      } catch (e) { statusMsg.textContent = 'String Base64 tidak valid.'; }
+    }));
+  </script>
+
+</body>
+</html>
