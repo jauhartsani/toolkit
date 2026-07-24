@@ -17,6 +17,7 @@ function formatBytes(bytes) {
 }
 
 function triggerDownload(blob, filename) {
+  if (!blob) throw new Error('Unable to create the download file.');
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -25,6 +26,54 @@ function triggerDownload(blob, filename) {
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+
+function generateQrCanvas(canvas, text, onSuccess, onFailure) {
+  if (!window.QRCode) {
+    if (window.toolkitQrFallbackLoading) return;
+    window.toolkitQrFallbackLoading = true;
+    const fallback = document.createElement('script');
+    fallback.src = 'https://unpkg.com/qrcode@1.5.3/build/qrcode.min.js';
+    fallback.onload = () => { window.toolkitQrFallbackLoading = false; generateQrCanvas(canvas, text, onSuccess, onFailure); };
+    fallback.onerror = () => { window.toolkitQrFallbackLoading = false; onFailure('QR library could not be loaded. Check your internet connection and try again.'); };
+    document.head.appendChild(fallback);
+    return;
+  }
+  try {
+    if (typeof QRCode.toCanvas !== 'function') {
+      const holder = document.createElement('div');
+      holder.style.cssText = 'position:fixed;left:-10000px;top:-10000px;width:260px;height:260px;';
+      document.body.appendChild(holder);
+      new QRCode(holder, { text, width: 260, height: 260, correctLevel: QRCode.CorrectLevel.H });
+      const render = () => {
+        const source = holder.querySelector('canvas, img');
+        if (!source) { holder.remove(); onFailure('Failed to generate QR code.'); return; }
+        const context = canvas.getContext('2d');
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        canvas.width = 260; canvas.height = 260;
+        context.drawImage(source, 0, 0, 260, 260);
+        holder.remove();
+        onSuccess();
+      };
+      const image = holder.querySelector('img');
+      if (image) image.onload = render;
+      else setTimeout(render, 50);
+      return;
+    }
+    QRCode.toCanvas(canvas, text, { width: 260, margin: 2, color: { dark: '#14171F', light: '#FFFFFF' } }, error => {
+      if (error) onFailure('Failed to generate QR code.');
+      else onSuccess();
+    });
+  } catch (error) {
+    onFailure('Failed to generate QR code.');
+  }
+}
+
+function downloadCanvas(canvas, filename, onFailure) {
+  canvas.toBlob(blob => {
+    if (!blob) { onFailure('Unable to create PNG download.'); return; }
+    try { triggerDownload(blob, filename); } catch (error) { onFailure('Unable to download the QR code.'); }
+  }, 'image/png');
 }
 
 /**
@@ -73,8 +122,67 @@ function runWithAd(onComplete) {
   });
 }
 
+function setupTheme() {
+  const saved = localStorage.getItem('toolkit-theme');
+  if (saved === 'dark' || saved === 'light') document.documentElement.dataset.theme = saved;
+  const headerInner = document.querySelector('.tk-header-inner');
+  if (!headerInner || document.querySelector('.tk-theme-toggle')) return;
+  const actions = document.createElement('div');
+  actions.className = 'tk-header-actions';
+  actions.innerHTML = '<button class="tk-theme-toggle" type="button" aria-label="Toggle dark mode" title="Toggle dark mode"></button><button class="tk-nav-toggle" id="tk-nav-toggle" type="button" aria-label="Open navigation" aria-expanded="false">☰</button>';
+  headerInner.appendChild(actions);
+  const themeButton = actions.querySelector('.tk-theme-toggle');
+  const updateThemeButton = () => { themeButton.textContent = document.documentElement.dataset.theme === 'dark' ? '☀' : '☾'; };
+  themeButton.addEventListener('click', () => {
+    const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = next;
+    localStorage.setItem('toolkit-theme', next);
+    updateThemeButton();
+  });
+  updateThemeButton();
+}
+
+function translatePageToEnglish() {
+  document.documentElement.lang = 'en';
+  const replacements = [
+    ['Semua tools yang Anda butuhkan,', 'All the tools you need,'],
+    ['berjalan di browser Anda sendiri.', 'running in your own browser.'],
+    ['Kompres gambar & PDF, edit dokumen, convert format, generator QR, kalkulator, dan lainnya — tanpa install, tanpa upload ke server, dan gratis.', 'Compress images and PDFs, edit documents, convert formats, generate QR codes, calculate values, and more — no installation, no server uploads, and completely free.'],
+    ['Tidak ada tools yang cocok dengan pencarian Anda.', 'No tools match your search.'],
+    ['Cari tools', 'Search tools'], ['misal:', 'for example:'],
+    ['Perkecil ukuran', 'Reduce the size'], ['Kompresi', 'Compression'], ['tetap terjaga', 'preserved'], ['Hemat ukuran', 'Reduce file size'],
+    ['Klik di halaman untuk menambahkan', 'Click the page to add'], ['Gambar & tempelkan tanda tangan', 'Draw and place a signature'],
+    ['Gabungkan', 'Combine'], ['Pisahkan', 'Split'], ['Ubah', 'Convert'], ['Susun', 'Combine'], ['menjadi', 'to'],
+    ['Hitung', 'Calculate'], ['Simulasi', 'Simulate'], ['Acak', 'Random'], ['Alat acak', 'Random tool'],
+    ['teks biasa', 'plain text'], ['link website', 'website link'], ['pesan otomatis', 'automatic message'], ['langsung menghubungkan ke WiFi', 'connect directly to WiFi'],
+    ['kartu nama digital siap simpan', 'digital business card ready to save'], ['waktu baca', 'reading time'], ['harga akhir setelah diskon & pajak', 'final price after discount and tax'],
+    ['pertumbuhan investasi berbunga', 'investment growth with compound interest'], ['password acak aman', 'secure random password'], ['sistem undian', 'drawings'],
+    ['Beautify, minify, dan validasi', 'Beautify, minify, and validate'], ['dua arah', 'in both directions'],
+    ['Hasil', 'Result'], ['Pajak', 'Tax'], ['Bunga Majemuk', 'Compound Interest'], ['Kata sandi', 'Password'], ['Tanpa duplikat', 'No duplicates'],
+    ['Acak Sekarang', 'Pick Now'], ['Rapikan', 'Beautify'], ['kecilkan', 'Minify'], ['validasi', 'Validate'], ['Pisahkan PDF', 'Split PDF'],
+    ['Gabungkan PDF', 'Merge PDF'], ['Tanda tangan', 'Signature'], ['Ketik atau tempel', 'Type or paste'],
+    ['Generator QR Code', 'QR Code Generator'], ['Generator', 'Generator'], ['Gratis', 'Free'], ['Online', 'Online'],
+    ['Buat QR Code', 'Generate QR Code'], ['Download QR', 'Download QR'], ['Gagal membuat QR', 'Failed to generate QR code'],
+    ['Nama Lengkap', 'Full Name'], ['Nomor HP', 'Phone Number'], ['Nama Anda', 'Your name'], ['Nomor WhatsApp', 'WhatsApp Number'],
+    ['format internasional, tanpa +', 'international format, without +'], ['Pesan Otomatis (opsional)', 'Prefilled Message (optional)'],
+    ['Halo, saya ingin bertanya', 'Hello, I would like to ask'], ['Nama WiFi', 'WiFi Name'], ['Kata sandi WiFi', 'WiFi password'],
+    ['Jenis Keamanan', 'Security Type'], ['Tanpa Password', 'No Password'], ['Teks', 'Text'], ['Ketik teks', 'Type text'],
+    ['Kumpulan tools online', 'Collection of online tools'], ['berjalan langsung di browser Anda', 'run directly in your browser'], ['Gratis & Client-Side', 'Free & Client-Side']
+  ];
+  const replace = value => replacements.reduce((result, pair) => result.split(pair[0]).join(pair[1]), value);
+  document.querySelectorAll('body *').forEach(element => {
+    element.childNodes.forEach(node => { if (node.nodeType === Node.TEXT_NODE) node.nodeValue = replace(node.nodeValue); });
+    ['placeholder', 'title', 'aria-label', 'content', 'data-name'].forEach(attribute => {
+      if (element.hasAttribute(attribute)) element.setAttribute(attribute, replace(element.getAttribute(attribute)));
+    });
+  });
+  document.title = replace(document.title);
+}
+
 /* mobile nav */
 document.addEventListener('DOMContentLoaded', () => {
+  translatePageToEnglish();
+  setupTheme();
   const categoryLinks = {
     Compress: 'compress/index.html',
     PDF: 'pdf/index.html',
@@ -107,6 +215,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (toggle && nav) {
     toggle.addEventListener('click', () => {
       nav.classList.toggle('tk-nav-open');
+      toggle.setAttribute('aria-expanded', nav.classList.contains('tk-nav-open') ? 'true' : 'false');
     });
   }
 });

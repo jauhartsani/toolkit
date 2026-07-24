@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Generator QR Code Teks Online — Gratis</title>
-  <meta name="description" content="Ubah teks apa pun menjadi kode QR secara instan, langsung di browser Anda. Gratis dan tanpa batas.">
+  <title>Online Text QR Code Generator — Free</title>
+  <meta name="description" content="Convert any text into a QR code instantly in your browser. Free and unlimited.">
   <link rel="canonical" href="https://tools-kamu.com/qr/text.html">
   <meta name="robots" content="index, follow">
   <meta property="og:title" content="Generator QR Code Teks Online — Gratis">
@@ -44,16 +44,16 @@
             <span class="spec-io">TEXT → QR CODE</span>
             <span>INSTANT</span>
           </div>
-      <h1>Generator QR Code Teks Online</h1>
-      <p>Ubah teks apa pun menjadi kode QR secara instan, langsung di browser Anda. Gratis dan tanpa batas.</p>
+      <h1>Online Text QR Code Generator</h1>
+      <p>Convert any text into a QR code instantly in your browser. Free and unlimited.</p>
     </div>
 
     <div id="adsense-banner-top" class="ad-slot">Advertisement Slot</div>
 
     <div class="panel">
-      <label class="field-label">Teks</label>
-      <textarea id="qtext" rows="4" placeholder="Ketik teks yang ingin diubah menjadi QR…"></textarea>
-      <button class="btn btn-primary btn-block" id="runBtn" style="margin-top:18px;">Buat QR Code</button>
+      <label class="field-label">Text</label>
+      <textarea id="qtext" rows="4" placeholder="Type the text you want to convert into a QR code…"></textarea>
+      <button class="btn btn-primary btn-block" id="runBtn" style="margin-top:18px;">Generate QR Code</button>
             <div id="qrResultWrap" style="display:none; margin-top:24px; text-align:center;">
         <div style="display:inline-block; padding:18px; background:#fff; border:1px solid var(--line); border-radius:14px;">
           <canvas id="qrCanvas"></canvas>
@@ -75,7 +75,7 @@
   </footer>
 
   <script src="../assets/js/common.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  <script src="../node_modules/qrcodejs/qrcode.min.js"></script>
   <script>
     const runBtn = document.getElementById('runBtn');
     const qrResultWrap = document.getElementById('qrResultWrap');
@@ -83,21 +83,20 @@
 
     runBtn.addEventListener('click', () => {
       const qrText = document.getElementById('qtext').value.trim();
-      if (!qrText) return;
+      if (!qrText) { alert('Please enter some text first.'); return; }
       runBtn.disabled = true;
-      runWithAd(() => generateQr(qrText));
+      generateQr(qrText);
     });
 
     function generateQr(text) {
-      QRCode.toCanvas(canvas, text, { width: 260, margin: 2, color: { dark: '#14171F', light: '#FFFFFF' } }, err => {
-        if (err) { alert('Gagal membuat QR'); runBtn.disabled = false; return; }
+      generateQrCanvas(canvas, text, () => {
         qrResultWrap.style.display = 'block';
         runBtn.disabled = false;
-      });
+      }, error => { alert(error); runBtn.disabled = false; });
     }
 
     document.getElementById('downloadBtn').addEventListener('click', () => {
-      canvas.toBlob(blob => triggerDownload(blob, 'qrcode.png'));
+      downloadCanvas(canvas, 'qrcode.png', alert);
     });
   </script>
 

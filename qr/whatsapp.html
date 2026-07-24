@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Generator QR Code WhatsApp Online — Chat Otomatis</title>
-  <meta name="description" content="Buat kode QR yang langsung membuka chat WhatsApp dengan nomor dan pesan otomatis saat dipindai.">
+  <title>Online WhatsApp QR Code Generator — Automatic Chat</title>
+  <meta name="description" content="Create a QR code that opens a WhatsApp chat with a phone number and optional prefilled message.">
   <link rel="canonical" href="https://tools-kamu.com/qr/whatsapp.html">
   <meta name="robots" content="index, follow">
   <meta property="og:title" content="Generator QR Code WhatsApp Online — Chat Otomatis">
@@ -44,18 +44,18 @@
             <span class="spec-io">PHONE + MSG → QR CODE</span>
             <span>WA DEEPLINK</span>
           </div>
-      <h1>Generator QR Code WhatsApp Online</h1>
-      <p>Buat kode QR yang langsung membuka chat WhatsApp dengan nomor dan pesan otomatis saat dipindai.</p>
+      <h1>Online WhatsApp QR Code Generator</h1>
+      <p>Create a QR code that opens a WhatsApp chat with a phone number and optional prefilled message.</p>
     </div>
 
     <div id="adsense-banner-top" class="ad-slot">Advertisement Slot</div>
 
     <div class="panel">
-      <label class="field-label">Nomor WhatsApp (format internasional, tanpa +)</label>
+      <label class="field-label">WhatsApp Number (international format, without +)</label>
       <input type="text" id="qphone" placeholder="6281234567890">
-      <label class="field-label" style="margin-top:14px;">Pesan Otomatis (opsional)</label>
-      <textarea id="qmsg" rows="3" placeholder="Halo, saya ingin bertanya…"></textarea>
-      <button class="btn btn-primary btn-block" id="runBtn" style="margin-top:18px;">Buat QR Code</button>
+      <label class="field-label" style="margin-top:14px;">Prefilled Message (optional)</label>
+      <textarea id="qmsg" rows="3" placeholder="Hello, I would like to ask…"></textarea>
+      <button class="btn btn-primary btn-block" id="runBtn" style="margin-top:18px;">Generate QR Code</button>
             <div id="qrResultWrap" style="display:none; margin-top:24px; text-align:center;">
         <div style="display:inline-block; padding:18px; background:#fff; border:1px solid var(--line); border-radius:14px;">
           <canvas id="qrCanvas"></canvas>
@@ -77,7 +77,7 @@
   </footer>
 
   <script src="../assets/js/common.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  <script src="../node_modules/qrcodejs/qrcode.min.js"></script>
   <script>
     const runBtn = document.getElementById('runBtn');
     const qrResultWrap = document.getElementById('qrResultWrap');
@@ -87,21 +87,20 @@
       const phone = document.getElementById('qphone').value.trim().replace(/[^0-9]/g, '');
       const msg = document.getElementById('qmsg').value.trim();
       const qrText = phone ? ('https://wa.me/' + phone + (msg ? '?text=' + encodeURIComponent(msg) : '')) : '';
-      if (!qrText) return;
+      if (!qrText) { alert('Please enter a WhatsApp number first.'); return; }
       runBtn.disabled = true;
-      runWithAd(() => generateQr(qrText));
+      generateQr(qrText);
     });
 
     function generateQr(text) {
-      QRCode.toCanvas(canvas, text, { width: 260, margin: 2, color: { dark: '#14171F', light: '#FFFFFF' } }, err => {
-        if (err) { alert('Gagal membuat QR'); runBtn.disabled = false; return; }
+      generateQrCanvas(canvas, text, () => {
         qrResultWrap.style.display = 'block';
         runBtn.disabled = false;
-      });
+      }, error => { alert(error); runBtn.disabled = false; });
     }
 
     document.getElementById('downloadBtn').addEventListener('click', () => {
-      canvas.toBlob(blob => triggerDownload(blob, 'qrcode.png'));
+      downloadCanvas(canvas, 'qrcode.png', alert);
     });
   </script>
 

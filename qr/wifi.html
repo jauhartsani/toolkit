@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Generator QR Code WiFi Online — Scan Langsung Konek</title>
-  <meta name="description" content="Buat kode QR WiFi dari SSID dan password Anda — tamu tinggal scan dan langsung terhubung tanpa mengetik.">
+  <title>Online WiFi QR Code Generator — Scan to Connect</title>
+  <meta name="description" content="Create a WiFi QR code from your SSID and password so guests can connect without typing.">
   <link rel="canonical" href="https://tools-kamu.com/qr/wifi.html">
   <meta name="robots" content="index, follow">
   <meta property="og:title" content="Generator QR Code WiFi Online — Scan Langsung Konek">
@@ -44,24 +44,24 @@
             <span class="spec-io">SSID + PASSWORD → QR CODE</span>
             <span>AUTO-CONNECT</span>
           </div>
-      <h1>Generator QR Code WiFi Online</h1>
-      <p>Buat kode QR WiFi dari SSID dan password Anda — tamu tinggal scan dan langsung terhubung tanpa mengetik.</p>
+      <h1>Online WiFi QR Code Generator</h1>
+      <p>Create a WiFi QR code from your SSID and password so guests can connect without typing.</p>
     </div>
 
     <div id="adsense-banner-top" class="ad-slot">Advertisement Slot</div>
 
     <div class="panel">
-      <label class="field-label">Nama WiFi (SSID)</label>
-      <input type="text" id="qssid" placeholder="Nama-WiFi-Anda">
+      <label class="field-label">WiFi Name (SSID)</label>
+      <input type="text" id="qssid" placeholder="Your-WiFi-Name">
       <label class="field-label" style="margin-top:14px;">Password</label>
       <input type="text" id="qpass" placeholder="Kata sandi WiFi">
-      <label class="field-label" style="margin-top:14px;">Jenis Keamanan</label>
+      <label class="field-label" style="margin-top:14px;">Security Type</label>
       <select id="qsec">
         <option value="WPA">WPA/WPA2</option>
         <option value="WEP">WEP</option>
-        <option value="nopass">Tanpa Password</option>
+        <option value="nopass">No Password</option>
       </select>
-      <button class="btn btn-primary btn-block" id="runBtn" style="margin-top:18px;">Buat QR Code</button>
+      <button class="btn btn-primary btn-block" id="runBtn" style="margin-top:18px;">Generate QR Code</button>
             <div id="qrResultWrap" style="display:none; margin-top:24px; text-align:center;">
         <div style="display:inline-block; padding:18px; background:#fff; border:1px solid var(--line); border-radius:14px;">
           <canvas id="qrCanvas"></canvas>
@@ -83,7 +83,7 @@
   </footer>
 
   <script src="../assets/js/common.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  <script src="../node_modules/qrcodejs/qrcode.min.js"></script>
   <script>
     const runBtn = document.getElementById('runBtn');
     const qrResultWrap = document.getElementById('qrResultWrap');
@@ -95,21 +95,21 @@
       const sec = document.getElementById('qsec').value;
       const esc = s => s.replace(/([\\;,:"])/g, '\\$1');
       const qrText = ssid ? `WIFI:T:${sec};S:${esc(ssid)};P:${sec === 'nopass' ? '' : esc(pass)};;` : '';
-      if (!qrText) return;
+      if (!qrText) { alert('Please enter a WiFi name first.'); return; }
+      if (sec !== 'nopass' && !pass) { alert('Please enter the WiFi password.'); return; }
       runBtn.disabled = true;
-      runWithAd(() => generateQr(qrText));
+      generateQr(qrText);
     });
 
     function generateQr(text) {
-      QRCode.toCanvas(canvas, text, { width: 260, margin: 2, color: { dark: '#14171F', light: '#FFFFFF' } }, err => {
-        if (err) { alert('Gagal membuat QR'); runBtn.disabled = false; return; }
+      generateQrCanvas(canvas, text, () => {
         qrResultWrap.style.display = 'block';
         runBtn.disabled = false;
-      });
+      }, error => { alert(error); runBtn.disabled = false; });
     }
 
     document.getElementById('downloadBtn').addEventListener('click', () => {
-      canvas.toBlob(blob => triggerDownload(blob, 'qrcode.png'));
+      downloadCanvas(canvas, 'qrcode.png', alert);
     });
   </script>
 
