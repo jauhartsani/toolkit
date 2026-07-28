@@ -83,6 +83,7 @@ function downloadCanvas(canvas, filename, onFailure) {
  * the timer, whichever the tool prefers) invokes `onComplete`.
  */
 function runWithAd(onComplete) {
+  armPopunder();
   const overlay = document.createElement('div');
   overlay.className = 'adm-overlay';
   overlay.innerHTML = `
@@ -120,6 +121,50 @@ function runWithAd(onComplete) {
     overlay.remove();
     onComplete();
   });
+}
+
+/* ==========================================================================
+   Ad placements (toolkitme.my.id ad tags)
+   - loadSocialBar(): floating bar, loaded once per page.
+   - loadNativeBanner(): inline banner container, inserted just above the
+     footer on every page (below the fold, out of the way of the tools).
+   - armPopunder(): loads the popunder script lazily, the first time a user
+     actually triggers a tool action (via runWithAd), not on page load —
+     keeps it tied to real engagement instead of firing on every pageview.
+   ========================================================================== */
+function loadSocialBar() {
+  if (window.__tkSocialBarLoaded) return;
+  window.__tkSocialBarLoaded = true;
+  const s = document.createElement('script');
+  s.src = 'https://pl30569172.effectivecpmnetwork.com/39/87/4b/39874b9e5e5c989ccd18f2970e3a93ee.js';
+  document.body.appendChild(s);
+}
+
+function loadNativeBanner() {
+  const containerId = 'container-e500dd269ce4ebc1690c57fbe4fbf948';
+  if (document.getElementById(containerId)) return;
+  const footer = document.querySelector('.tk-footer');
+  const container = document.createElement('div');
+  container.id = containerId;
+  container.style.cssText = 'max-width:960px;margin:32px auto;padding:0 16px;';
+  if (footer && footer.parentNode) {
+    footer.parentNode.insertBefore(container, footer);
+  } else {
+    document.body.appendChild(container);
+  }
+  const s = document.createElement('script');
+  s.async = true;
+  s.setAttribute('data-cfasync', 'false');
+  s.src = 'https://pl30569173.effectivecpmnetwork.com/e500dd269ce4ebc1690c57fbe4fbf948/invoke.js';
+  document.body.appendChild(s);
+}
+
+function armPopunder() {
+  if (window.__tkPopunderLoaded) return;
+  window.__tkPopunderLoaded = true;
+  const s = document.createElement('script');
+  s.src = 'https://pl30569171.effectivecpmnetwork.com/75/ac/f1/75acf15cd5a545892e2b511c0d1136ea.js';
+  document.body.appendChild(s);
 }
 
 function setupTheme() {
@@ -183,6 +228,8 @@ function translatePageToEnglish() {
 document.addEventListener('DOMContentLoaded', () => {
   translatePageToEnglish();
   setupTheme();
+  loadSocialBar();
+  loadNativeBanner();
   const categoryLinks = {
     Compress: 'compress/index.html',
     PDF: 'pdf/index.html',

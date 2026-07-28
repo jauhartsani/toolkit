@@ -2,8 +2,16 @@
  * GET /api/tiktok?url=<tiktok video url>&type=video|audio|photo
  *
  * Fetches the public TikTok video page server-side and extracts the direct
- * media URL(s) from TikTok's own embedded page-state JSON
- * (`__UNIVERSAL_DATA_FOR_REHYDRATION__`).
+ * media URL(s) from TikTok's own embedded page-state JSON. TikTok has used
+ * two different script tags for this over time:
+ *   - `__UNIVERSAL_DATA_FOR_REHYDRATION__` (current)
+ *   - `SIGI_STATE` (older, some regions/experiments still serve it)
+ * Both are checked. This endpoint also detects TikTok's anti-bot "verify"
+ * / captcha interstitial, which is a common cause of failures that look
+ * like "not a playable post" but are actually TikTok blocking the request
+ * before any real page data loads (frequent for requests coming from
+ * datacenter/serverless IP ranges, e.g. Vercel) — the error message now
+ * distinguishes that case from an actually-missing post.
  *
  * Accepts both full links (tiktok.com/@user/video/123...) and short share
  * links (vt.tiktok.com/xxxx, vm.tiktok.com/xxxx) — short links are resolved
@@ -45,15 +53,55 @@ async function fetchHtml(url) {
   return res.text();
 }
 
-function extractItemStruct(html) {
+// TikTok's bot-check interstitial ("verify to continue" / captcha page)
+// returns 200 with real HTML, so a status check alone won't catch it —
+// it has to be detected from page content instead.
+function looksLikeBotWall(html) {
+  return /verify to continue|secsdk-captcha|captcha_verify_container|"statusCode":10201|__tea_cache_wait/i.test(html);
+}
+
+function extractUniversalData(html) {
   const match = html.match(/<script id="__UNIVERSAL_DATA_FOR_REHYDRATION__"[^>]*>([\s\S]*?)<\/script>/);
-  if (!match) throw new Error('Could not read TikTok page data. TikTok may have changed its page structure.');
-  const data = JSON.parse(match[1]);
-  const scope = data?.__DEFAULT_SCOPE__ || {};
-  const detail = scope['webapp.video-detail'] || scope['webapp.photo-detail'];
-  const item = detail?.itemInfo?.itemStruct;
-  if (!item) throw new Error('This link does not point to a playable TikTok video or photo post.');
-  return item;
+  if (!match) return null;
+  try {
+    const data = JSON.parse(match[1]);
+    const scope = data?.__DEFAULT_SCOPE__ || {};
+    const detail = scope['webapp.video-detail'] || scope['webapp.photo-detail'];
+    return detail?.itemInfo?.itemStruct || null;
+  } catch {
+    return null;
+  }
+}
+
+// Legacy/alternate embed used by some TikTok surfaces.
+function extractSigiState(html) {
+  const match = html.match(/<script id="SIGI_STATE"[^>]*>([\s\S]*?)<\/script>/);
+  if (!match) return null;
+  try {
+    const data = JSON.parse(match[1]);
+    const modules = data?.ItemModule || {};
+    const firstKey = Object.keys(modules)[0];
+    return firstKey ? modules[firstKey] : null;
+  } catch {
+    return null;
+  }
+}
+
+function itemToMedia(item) {
+  const media = [];
+  if (item.imagePost && Array.isArray(item.imagePost.images)) {
+    item.imagePost.images.forEach((img) => {
+      const src = img?.imageURL?.urlList?.[0];
+      if (src) media.push({ type: 'photo', url: src });
+    });
+  } else if (item.video) {
+    const playUrl = item.video.playAddr || item.video.downloadAddr;
+    if (playUrl) media.push({ type: 'video', url: playUrl, thumbnail: item.video.cover || item.video.originCover });
+  }
+  if (item.music && item.music.playUrl) {
+    media.push({ type: 'audio', url: item.music.playUrl });
+  }
+  return media;
 }
 
 module.exports = async function handler(req, res) {
@@ -65,25 +113,21 @@ module.exports = async function handler(req, res) {
     let cleanUrl = normalizeTikTokUrl(rawUrl);
     cleanUrl = await resolveShortLink(cleanUrl);
     const html = await fetchHtml(cleanUrl);
-    const item = extractItemStruct(html);
 
-    const media = [];
-
-    if (item.imagePost && Array.isArray(item.imagePost.images)) {
-      // TikTok photo/slideshow post
-      item.imagePost.images.forEach((img) => {
-        const src = img?.imageURL?.urlList?.[0];
-        if (src) media.push({ type: 'photo', url: src });
+    if (looksLikeBotWall(html)) {
+      res.status(422).json({
+        success: false,
+        error: 'TikTok showed an anti-bot "verify to continue" check for this request instead of the real page — this happens on TikTok\'s side (it\'s more aggressive for requests from cloud/server IPs) and isn\'t caused by this specific link.',
       });
-    } else if (item.video) {
-      const playUrl = item.video.playAddr || item.video.downloadAddr;
-      if (playUrl) media.push({ type: 'video', url: playUrl, thumbnail: item.video.cover || item.video.originCover });
+      return;
     }
 
-    if (item.music && item.music.playUrl) {
-      media.push({ type: 'audio', url: item.music.playUrl });
+    const item = extractUniversalData(html) || extractSigiState(html);
+    if (!item) {
+      throw new Error('This link does not point to a playable TikTok video or photo post.');
     }
 
+    const media = itemToMedia(item);
     if (!media.length) {
       res.status(422).json({
         success: false,
