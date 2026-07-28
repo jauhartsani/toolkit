@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://tools-kamu.com/sitemap.xml
+Sitemap: https://www.toolkitme.my.id/sitemap.xml

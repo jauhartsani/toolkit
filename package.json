@@ -1,6 +1,6 @@
 {
-  "dependencies": {
-    "qrcode": "^1.5.3",
-    "qrcodejs": "^1.0.0"
-  }
+  "engines": {
+    "node": "20.x"
+  },
+  "comment": "This is a static site + Vercel serverless functions (/api). There is no build step, so nothing here ever runs 'npm install' on deploy — client-side libraries (qrcode, UPNG, pako) are vendored directly under assets/js/vendor instead of being loaded from node_modules."
 }

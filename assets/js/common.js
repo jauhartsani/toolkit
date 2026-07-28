@@ -33,7 +33,7 @@ function generateQrCanvas(canvas, text, onSuccess, onFailure) {
     if (window.toolkitQrFallbackLoading) return;
     window.toolkitQrFallbackLoading = true;
     const fallback = document.createElement('script');
-    fallback.src = 'https://unpkg.com/qrcode@1.5.3/build/qrcode.min.js';
+    fallback.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
     fallback.onload = () => { window.toolkitQrFallbackLoading = false; generateQrCanvas(canvas, text, onSuccess, onFailure); };
     fallback.onerror = () => { window.toolkitQrFallbackLoading = false; onFailure('QR library could not be loaded. Check your internet connection and try again.'); };
     document.head.appendChild(fallback);
@@ -196,7 +196,11 @@ document.addEventListener('DOMContentLoaded', () => {
     'Dev Tools': 'dev/index.html',
     Calculator: 'calc/index.html',
     Random: 'random/index.html',
-    'Random Generators': 'random/index.html'
+    'Random Generators': 'random/index.html',
+    Instagram: 'instagram/index.html',
+    'Instagram Downloader': 'instagram/index.html',
+    TikTok: 'tiktok/index.html',
+    'TikTok Downloader': 'tiktok/index.html'
   };
   const isInnerPage = document.querySelector('.tk-logo')?.getAttribute('href')?.startsWith('../');
   document.querySelectorAll('#tk-nav a').forEach(link => {

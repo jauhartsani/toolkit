@@ -345,3 +345,46 @@ input[type=range]::-moz-range-thumb{
 .tk-theme-toggle,.tk-nav-toggle{border:1px solid var(--line);background:var(--paper-raised);color:var(--ink);border-radius:8px;min-width:36px;height:36px;cursor:pointer;font-size:16px;}
 .tk-nav-toggle{display:none;}
 @media (max-width:640px){.tk-nav-toggle{display:inline-flex;align-items:center;justify-content:center;}.tk-header-inner{position:relative;}}
+
+/* ---------- SEO content block (How to Use + FAQ) ---------- */
+.tk-seo{ margin-top:32px; }
+.tk-seo h2{ font-size:20px; margin:0 0 14px; }
+.tk-seo-block{ margin-bottom:26px; }
+.howto-list{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:10px; }
+.howto-list li{ display:flex; gap:12px; align-items:flex-start; font-size:14px; color:var(--slate); line-height:1.55; }
+.howto-num{
+  flex:none; width:24px; height:24px; border-radius:50%; background:var(--signal-soft);
+  color:var(--signal-deep); font-family:'JetBrains Mono',monospace; font-weight:700; font-size:12px;
+  display:flex; align-items:center; justify-content:center; margin-top:1px;
+}
+.faq-item{ border-top:1px solid var(--line); padding:14px 0; }
+.faq-item:first-child{ border-top:none; padding-top:0; }
+.faq-item dt{ font-weight:600; font-size:14.5px; color:var(--ink); margin-bottom:6px; }
+.faq-item dd{ margin:0; font-size:14px; color:var(--slate); line-height:1.55; }
+
+/* ---------- downloader (Instagram / TikTok) ---------- */
+.dl-tabs{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:22px; }
+.dl-tabs a{
+  font-size:13px; font-weight:600; padding:8px 14px; border-radius:999px;
+  border:1px solid var(--line); color:var(--slate); text-decoration:none; background:var(--paper-raised);
+  transition:border-color .15s, color .15s;
+}
+.dl-tabs a:hover{ border-color:var(--signal); color:var(--signal-deep); }
+.dl-tabs a.active{ background:var(--signal); border-color:var(--signal); color:#fff; }
+.dl-input-row{ display:flex; gap:10px; flex-wrap:wrap; }
+.dl-input-row input[type="text"]{
+  flex:1; min-width:200px; padding:14px 16px; border-radius:10px; border:1.5px solid var(--line);
+  font-size:14px; font-family:inherit; background:var(--paper);
+}
+.dl-input-row input[type="text"]:focus{ outline:none; border-color:var(--signal); }
+.dl-input-row .btn{ flex:none; }
+.dl-results{ display:none; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:16px; margin-top:24px; }
+.dl-result-card{
+  border:1px solid var(--line); border-radius:var(--radius); padding:12px; background:var(--paper-raised);
+}
+.dl-thumb{ width:100%; border-radius:8px; display:block; background:#000; max-height:280px; object-fit:contain; }
+.dl-status{ font-size:13px; color:var(--slate-soft); margin-top:10px; min-height:18px; }
+.dl-note{
+  margin-top:16px; font-size:12.5px; color:var(--slate-soft); background:var(--paper);
+  border:1px dashed var(--line); border-radius:8px; padding:10px 12px;
+}

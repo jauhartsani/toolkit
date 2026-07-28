@@ -3,16 +3,23 @@
 <head>
 <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Online WhatsApp QR Code Generator — Automatic Chat</title>
-  <meta name="description" content="Create a QR code that opens a WhatsApp chat with a phone number and optional prefilled message.">
-  <link rel="canonical" href="https://tools-kamu.com/qr/whatsapp.html">
+  <title>WhatsApp QR Code Generator — Free Online QR Maker</title>
+  <meta name="description" content="Generate a QR code that opens a WhatsApp chat with a prefilled message online for free. Great for business cards and storefronts.">
+  <link rel="canonical" href="https://www.toolkitme.my.id/qr/whatsapp.html">
   <meta name="robots" content="index, follow">
-  <meta property="og:title" content="Generator QR Code WhatsApp Online — Chat Otomatis">
-  <meta property="og:description" content="Buat kode QR yang langsung membuka chat WhatsApp dengan nomor dan pesan otomatis saat dipindai.">
+  <meta property="og:title" content="WhatsApp QR Code Generator — Free Online QR Maker">
+  <meta property="og:description" content="Generate a QR code that opens a WhatsApp chat with a prefilled message online for free. Great for business cards and storefronts.">
   <meta property="og:type" content="website">
+  <meta property="og:url" content="https://www.toolkitme.my.id/qr/whatsapp.html">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="WhatsApp QR Code Generator — Free Online QR Maker">
+  <meta name="twitter:description" content="Generate a QR code that opens a WhatsApp chat with a prefilled message online for free. Great for business cards and storefronts.">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><rect width=%2232%22 height=%2232%22 rx=%228%22 fill=%22%232F6FED%22/></svg>">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="../assets/css/style.css">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "WhatsApp QR Code Generator", "url": "https://www.toolkitme.my.id/qr/whatsapp.html", "applicationCategory": "UtilitiesApplication", "operatingSystem": "Any (runs in web browser)", "description": "Generate a QR code that opens a WhatsApp chat with a prefilled message online for free. Great for business cards and storefronts.", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "isAccessibleForFree": true}</script>
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.toolkitme.my.id/index.html"}, {"@type": "ListItem", "position": 2, "name": "QR Code", "item": "https://www.toolkitme.my.id/qr/index.html"}, {"@type": "ListItem", "position": 3, "name": "WhatsApp QR Code Generator", "item": "https://www.toolkitme.my.id/qr/whatsapp.html"}]}</script>
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Does the phone number need the + sign?", "acceptedAnswer": {"@type": "Answer", "text": "Enter the number in international format without the leading + or spaces."}}, {"@type": "Question", "name": "Can I edit the message after generating the code?", "acceptedAnswer": {"@type": "Answer", "text": "Yes, just update the message field and the QR code preview refreshes."}}, {"@type": "Question", "name": "Is this free to use for business?", "acceptedAnswer": {"@type": "Answer", "text": "Yes, it's free for personal and business use with no limits."}}]}</script>
 </head>
 <body>
   <header class="tk-header">
@@ -30,6 +37,8 @@
           <a href="../dev/json-formatter.html">Dev</a>
           <a href="../calc/discount-tax.html">Calculator</a>
           <a href="../random/password.html">Random</a>
+          <a href="../instagram/index.html">Instagram</a>
+          <a href="../tiktok/index.html">TikTok</a>
       </nav>
     </div>
   </header>
@@ -44,7 +53,7 @@
             <span class="spec-io">PHONE + MSG → QR CODE</span>
             <span>WA DEEPLINK</span>
           </div>
-      <h1>Online WhatsApp QR Code Generator</h1>
+      <h1>WhatsApp QR Code Generator</h1>
       <p>Create a QR code that opens a WhatsApp chat with a phone number and optional prefilled message.</p>
     </div>
 
@@ -68,6 +77,25 @@
     </div>
 
     <div id="adsense-banner-bottom" class="ad-slot">Advertisement Slot</div>
+  
+    <section class="tk-seo panel">
+      <div class="tk-seo-block">
+        <h2>How to Use WhatsApp QR Code Generator</h2>
+        <ol class="howto-list">
+          <li><span class="howto-num">1</span><span>Enter your WhatsApp number in international format.</span></li>
+          <li><span class="howto-num">2</span><span>Optionally add a prefilled message.</span></li>
+          <li><span class="howto-num">3</span><span>Download the QR code to share or print.</span></li>
+        </ol>
+      </div>
+      <div class="tk-seo-block">
+        <h2>Frequently Asked Questions</h2>
+        <dl>
+          <div class="faq-item"><dt>Does the phone number need the + sign?</dt><dd>Enter the number in international format without the leading + or spaces.</dd></div>
+          <div class="faq-item"><dt>Can I edit the message after generating the code?</dt><dd>Yes, just update the message field and the QR code preview refreshes.</dd></div>
+          <div class="faq-item"><dt>Is this free to use for business?</dt><dd>Yes, it's free for personal and business use with no limits.</dd></div>
+        </dl>
+      </div>
+    </section>
   </main>
   <footer class="tk-footer">
     <div class="tk-footer-inner">
@@ -77,7 +105,7 @@
   </footer>
 
   <script src="../assets/js/common.js"></script>
-  <script src="../node_modules/qrcodejs/qrcode.min.js"></script>
+  <script src="../assets/js/vendor/qrcode.min.js"></script>
   <script>
     const runBtn = document.getElementById('runBtn');
     const qrResultWrap = document.getElementById('qrResultWrap');

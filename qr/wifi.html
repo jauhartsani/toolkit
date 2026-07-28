@@ -3,16 +3,23 @@
 <head>
 <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Online WiFi QR Code Generator — Scan to Connect</title>
-  <meta name="description" content="Create a WiFi QR code from your SSID and password so guests can connect without typing.">
-  <link rel="canonical" href="https://tools-kamu.com/qr/wifi.html">
+  <title>WiFi QR Code Generator — Free Online QR Maker</title>
+  <meta name="description" content="Create a QR code that connects to your WiFi network instantly when scanned. Free, fast, and generated entirely in your browser.">
+  <link rel="canonical" href="https://www.toolkitme.my.id/qr/wifi.html">
   <meta name="robots" content="index, follow">
-  <meta property="og:title" content="Generator QR Code WiFi Online — Scan Langsung Konek">
-  <meta property="og:description" content="Buat kode QR WiFi dari SSID dan password Anda — tamu tinggal scan dan langsung terhubung tanpa mengetik.">
+  <meta property="og:title" content="WiFi QR Code Generator — Free Online QR Maker">
+  <meta property="og:description" content="Create a QR code that connects to your WiFi network instantly when scanned. Free, fast, and generated entirely in your browser.">
   <meta property="og:type" content="website">
+  <meta property="og:url" content="https://www.toolkitme.my.id/qr/wifi.html">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="WiFi QR Code Generator — Free Online QR Maker">
+  <meta name="twitter:description" content="Create a QR code that connects to your WiFi network instantly when scanned. Free, fast, and generated entirely in your browser.">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><rect width=%2232%22 height=%2232%22 rx=%228%22 fill=%22%232F6FED%22/></svg>">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="../assets/css/style.css">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "WiFi QR Code Generator", "url": "https://www.toolkitme.my.id/qr/wifi.html", "applicationCategory": "UtilitiesApplication", "operatingSystem": "Any (runs in web browser)", "description": "Create a QR code that connects to your WiFi network instantly when scanned. Free, fast, and generated entirely in your browser.", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "isAccessibleForFree": true}</script>
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.toolkitme.my.id/index.html"}, {"@type": "ListItem", "position": 2, "name": "QR Code", "item": "https://www.toolkitme.my.id/qr/index.html"}, {"@type": "ListItem", "position": 3, "name": "WiFi QR Code Generator", "item": "https://www.toolkitme.my.id/qr/wifi.html"}]}</script>
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Is my WiFi password sent to a server?", "acceptedAnswer": {"@type": "Answer", "text": "No, the QR code is generated locally in your browser — your password never leaves your device."}}, {"@type": "Question", "name": "Which devices can scan a WiFi QR code?", "acceptedAnswer": {"@type": "Answer", "text": "Most modern Android and iPhone camera apps can scan and connect automatically."}}, {"@type": "Question", "name": "What if my network has no password?", "acceptedAnswer": {"@type": "Answer", "text": "Select the 'No Password' security option when generating the code."}}]}</script>
 </head>
 <body>
   <header class="tk-header">
@@ -30,6 +37,8 @@
           <a href="../dev/json-formatter.html">Dev</a>
           <a href="../calc/discount-tax.html">Calculator</a>
           <a href="../random/password.html">Random</a>
+          <a href="../instagram/index.html">Instagram</a>
+          <a href="../tiktok/index.html">TikTok</a>
       </nav>
     </div>
   </header>
@@ -44,7 +53,7 @@
             <span class="spec-io">SSID + PASSWORD → QR CODE</span>
             <span>AUTO-CONNECT</span>
           </div>
-      <h1>Online WiFi QR Code Generator</h1>
+      <h1>WiFi QR Code Generator</h1>
       <p>Create a WiFi QR code from your SSID and password so guests can connect without typing.</p>
     </div>
 
@@ -74,6 +83,25 @@
     </div>
 
     <div id="adsense-banner-bottom" class="ad-slot">Advertisement Slot</div>
+  
+    <section class="tk-seo panel">
+      <div class="tk-seo-block">
+        <h2>How to Use WiFi QR Code Generator</h2>
+        <ol class="howto-list">
+          <li><span class="howto-num">1</span><span>Enter your WiFi network name and password.</span></li>
+          <li><span class="howto-num">2</span><span>Select the security type of your network.</span></li>
+          <li><span class="howto-num">3</span><span>Download the QR code and let guests scan to connect.</span></li>
+        </ol>
+      </div>
+      <div class="tk-seo-block">
+        <h2>Frequently Asked Questions</h2>
+        <dl>
+          <div class="faq-item"><dt>Is my WiFi password sent to a server?</dt><dd>No, the QR code is generated locally in your browser — your password never leaves your device.</dd></div>
+          <div class="faq-item"><dt>Which devices can scan a WiFi QR code?</dt><dd>Most modern Android and iPhone camera apps can scan and connect automatically.</dd></div>
+          <div class="faq-item"><dt>What if my network has no password?</dt><dd>Select the 'No Password' security option when generating the code.</dd></div>
+        </dl>
+      </div>
+    </section>
   </main>
   <footer class="tk-footer">
     <div class="tk-footer-inner">
@@ -83,7 +111,7 @@
   </footer>
 
   <script src="../assets/js/common.js"></script>
-  <script src="../node_modules/qrcodejs/qrcode.min.js"></script>
+  <script src="../assets/js/vendor/qrcode.min.js"></script>
   <script>
     const runBtn = document.getElementById('runBtn');
     const qrResultWrap = document.getElementById('qrResultWrap');

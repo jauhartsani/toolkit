@@ -3,16 +3,23 @@
 <head>
 <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Online URL QR Code Generator — Free</title>
-  <meta name="description" content="Convert a website URL into a scannable QR code. Processed in your browser, free and fast.">
-  <link rel="canonical" href="https://tools-kamu.com/qr/url.html">
+  <title>URL to QR Code Generator — Free Online QR Maker</title>
+  <meta name="description" content="Generate a QR code for any website link online for free. Perfect for business cards, posters, and marketing — instant download.">
+  <link rel="canonical" href="https://www.toolkitme.my.id/qr/url.html">
   <meta name="robots" content="index, follow">
-  <meta property="og:title" content="Generator QR Code Link/URL Online — Gratis">
-  <meta property="og:description" content="Ubah link website menjadi kode QR yang bisa langsung dipindai. Diproses di browser, gratis dan cepat.">
+  <meta property="og:title" content="URL to QR Code Generator — Free Online QR Maker">
+  <meta property="og:description" content="Generate a QR code for any website link online for free. Perfect for business cards, posters, and marketing — instant download.">
   <meta property="og:type" content="website">
+  <meta property="og:url" content="https://www.toolkitme.my.id/qr/url.html">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="URL to QR Code Generator — Free Online QR Maker">
+  <meta name="twitter:description" content="Generate a QR code for any website link online for free. Perfect for business cards, posters, and marketing — instant download.">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><rect width=%2232%22 height=%2232%22 rx=%228%22 fill=%22%232F6FED%22/></svg>">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="../assets/css/style.css">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "URL to QR Code Generator", "url": "https://www.toolkitme.my.id/qr/url.html", "applicationCategory": "UtilitiesApplication", "operatingSystem": "Any (runs in web browser)", "description": "Generate a QR code for any website link online for free. Perfect for business cards, posters, and marketing — instant download.", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "isAccessibleForFree": true}</script>
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.toolkitme.my.id/index.html"}, {"@type": "ListItem", "position": 2, "name": "QR Code", "item": "https://www.toolkitme.my.id/qr/index.html"}, {"@type": "ListItem", "position": 3, "name": "URL to QR Code Generator", "item": "https://www.toolkitme.my.id/qr/url.html"}]}</script>
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Does the QR code expire?", "acceptedAnswer": {"@type": "Answer", "text": "No, a URL QR code works as long as the destination link stays active — there's no expiry set by this tool."}}, {"@type": "Question", "name": "Can I track scans on this QR code?", "acceptedAnswer": {"@type": "Answer", "text": "This generator creates a static QR code without built-in scan tracking."}}, {"@type": "Question", "name": "What format is the downloaded QR code?", "acceptedAnswer": {"@type": "Answer", "text": "It downloads as a PNG image, ready to print or share digitally."}}]}</script>
 </head>
 <body>
   <header class="tk-header">
@@ -30,6 +37,8 @@
           <a href="../dev/json-formatter.html">Dev</a>
           <a href="../calc/discount-tax.html">Calculator</a>
           <a href="../random/password.html">Random</a>
+          <a href="../instagram/index.html">Instagram</a>
+          <a href="../tiktok/index.html">TikTok</a>
       </nav>
     </div>
   </header>
@@ -44,7 +53,7 @@
             <span class="spec-io">URL → QR CODE</span>
             <span>INSTANT</span>
           </div>
-      <h1>Online URL QR Code Generator</h1>
+      <h1>URL to QR Code Generator</h1>
       <p>Convert a website URL into a scannable QR code. Processed in your browser, free and fast.</p>
     </div>
 
@@ -66,6 +75,25 @@
     </div>
 
     <div id="adsense-banner-bottom" class="ad-slot">Advertisement Slot</div>
+  
+    <section class="tk-seo panel">
+      <div class="tk-seo-block">
+        <h2>How to Use URL to QR Code Generator</h2>
+        <ol class="howto-list">
+          <li><span class="howto-num">1</span><span>Paste the website link you want to encode.</span></li>
+          <li><span class="howto-num">2</span><span>Preview the generated QR code instantly.</span></li>
+          <li><span class="howto-num">3</span><span>Download the QR code image and use it anywhere.</span></li>
+        </ol>
+      </div>
+      <div class="tk-seo-block">
+        <h2>Frequently Asked Questions</h2>
+        <dl>
+          <div class="faq-item"><dt>Does the QR code expire?</dt><dd>No, a URL QR code works as long as the destination link stays active — there's no expiry set by this tool.</dd></div>
+          <div class="faq-item"><dt>Can I track scans on this QR code?</dt><dd>This generator creates a static QR code without built-in scan tracking.</dd></div>
+          <div class="faq-item"><dt>What format is the downloaded QR code?</dt><dd>It downloads as a PNG image, ready to print or share digitally.</dd></div>
+        </dl>
+      </div>
+    </section>
   </main>
   <footer class="tk-footer">
     <div class="tk-footer-inner">
@@ -75,7 +103,7 @@
   </footer>
 
   <script src="../assets/js/common.js"></script>
-  <script src="../node_modules/qrcodejs/qrcode.min.js"></script>
+  <script src="../assets/js/vendor/qrcode.min.js"></script>
   <script>
     const runBtn = document.getElementById('runBtn');
     const qrResultWrap = document.getElementById('qrResultWrap');

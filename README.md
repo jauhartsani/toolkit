@@ -9,7 +9,7 @@ di-deploy ke Vercel, Netlify, GitHub Pages, atau hosting statis apa pun.
 ```
 toolkit-website/
 ├── index.html              ← Halaman utama (search + kategori)
-├── sitemap.xml              ← Sitemap SEO (domain contoh: tools-kamu.com)
+├── sitemap.xml              ← Sitemap SEO (domain contoh: www.toolkitme.my.id)
 ├── robots.txt
 ├── assets/
 │   ├── css/style.css        ← Design system (dipakai semua halaman)
@@ -58,11 +58,11 @@ https://vercel.com/new lewat opsi "Deploy without Git".
 ## Sebelum Live: Ganti Domain di sitemap.xml
 
 `sitemap.xml` dan meta tag `canonical` di setiap halaman memakai domain
-contoh `https://tools-kamu.com`. Setelah domain asli Anda aktif, cari
+contoh `https://www.toolkitme.my.id`. Setelah domain asli Anda aktif, cari
 dan ganti semua kemunculan string tersebut, misalnya:
 
 ```bash
-grep -rl "tools-kamu.com" . | xargs sed -i 's/tools-kamu.com/domain-anda.com/g'
+grep -rl "www.toolkitme.my.id" . | xargs sed -i 's/www.toolkitme.my.id/domain-anda.com/g'
 ```
 
 Lalu submit ulang `sitemap.xml` ke Google Search Console.

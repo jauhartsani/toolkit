@@ -3,16 +3,23 @@
 <head>
 <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Online Text QR Code Generator — Free</title>
-  <meta name="description" content="Convert any text into a QR code instantly in your browser. Free and unlimited.">
-  <link rel="canonical" href="https://tools-kamu.com/qr/text.html">
+  <title>Text to QR Code Generator — Free Online QR Maker</title>
+  <meta name="description" content="Generate a QR code from any plain text online for free. Instantly create and download a scannable QR code image — no sign-up required.">
+  <link rel="canonical" href="https://www.toolkitme.my.id/qr/text.html">
   <meta name="robots" content="index, follow">
-  <meta property="og:title" content="Generator QR Code Teks Online — Gratis">
-  <meta property="og:description" content="Ubah teks apa pun menjadi kode QR secara instan, langsung di browser Anda. Gratis dan tanpa batas.">
+  <meta property="og:title" content="Text to QR Code Generator — Free Online QR Maker">
+  <meta property="og:description" content="Generate a QR code from any plain text online for free. Instantly create and download a scannable QR code image — no sign-up required.">
   <meta property="og:type" content="website">
+  <meta property="og:url" content="https://www.toolkitme.my.id/qr/text.html">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Text to QR Code Generator — Free Online QR Maker">
+  <meta name="twitter:description" content="Generate a QR code from any plain text online for free. Instantly create and download a scannable QR code image — no sign-up required.">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><rect width=%2232%22 height=%2232%22 rx=%228%22 fill=%22%232F6FED%22/></svg>">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="../assets/css/style.css">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Text to QR Code Generator", "url": "https://www.toolkitme.my.id/qr/text.html", "applicationCategory": "UtilitiesApplication", "operatingSystem": "Any (runs in web browser)", "description": "Generate a QR code from any plain text online for free. Instantly create and download a scannable QR code image — no sign-up required.", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "isAccessibleForFree": true}</script>
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.toolkitme.my.id/index.html"}, {"@type": "ListItem", "position": 2, "name": "QR Code", "item": "https://www.toolkitme.my.id/qr/index.html"}, {"@type": "ListItem", "position": 3, "name": "Text to QR Code Generator", "item": "https://www.toolkitme.my.id/qr/text.html"}]}</script>
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Is there a character limit for text QR codes?", "acceptedAnswer": {"@type": "Answer", "text": "QR codes can hold a large amount of text, but very long text produces a denser, harder-to-scan code."}}, {"@type": "Question", "name": "Can I customize the QR code color?", "acceptedAnswer": {"@type": "Answer", "text": "The generator focuses on clean, reliably scannable black-on-white codes."}}, {"@type": "Question", "name": "Is this QR generator free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes, completely free with unlimited QR code generation."}}]}</script>
 </head>
 <body>
   <header class="tk-header">
@@ -30,6 +37,8 @@
           <a href="../dev/json-formatter.html">Dev</a>
           <a href="../calc/discount-tax.html">Calculator</a>
           <a href="../random/password.html">Random</a>
+          <a href="../instagram/index.html">Instagram</a>
+          <a href="../tiktok/index.html">TikTok</a>
       </nav>
     </div>
   </header>
@@ -44,7 +53,7 @@
             <span class="spec-io">TEXT → QR CODE</span>
             <span>INSTANT</span>
           </div>
-      <h1>Online Text QR Code Generator</h1>
+      <h1>Text to QR Code Generator</h1>
       <p>Convert any text into a QR code instantly in your browser. Free and unlimited.</p>
     </div>
 
@@ -66,6 +75,25 @@
     </div>
 
     <div id="adsense-banner-bottom" class="ad-slot">Advertisement Slot</div>
+  
+    <section class="tk-seo panel">
+      <div class="tk-seo-block">
+        <h2>How to Use Text to QR Code Generator</h2>
+        <ol class="howto-list">
+          <li><span class="howto-num">1</span><span>Type or paste the text you want to encode.</span></li>
+          <li><span class="howto-num">2</span><span>The QR code preview updates automatically.</span></li>
+          <li><span class="howto-num">3</span><span>Download the QR code as a PNG image.</span></li>
+        </ol>
+      </div>
+      <div class="tk-seo-block">
+        <h2>Frequently Asked Questions</h2>
+        <dl>
+          <div class="faq-item"><dt>Is there a character limit for text QR codes?</dt><dd>QR codes can hold a large amount of text, but very long text produces a denser, harder-to-scan code.</dd></div>
+          <div class="faq-item"><dt>Can I customize the QR code color?</dt><dd>The generator focuses on clean, reliably scannable black-on-white codes.</dd></div>
+          <div class="faq-item"><dt>Is this QR generator free?</dt><dd>Yes, completely free with unlimited QR code generation.</dd></div>
+        </dl>
+      </div>
+    </section>
   </main>
   <footer class="tk-footer">
     <div class="tk-footer-inner">
@@ -75,7 +103,7 @@
   </footer>
 
   <script src="../assets/js/common.js"></script>
-  <script src="../node_modules/qrcodejs/qrcode.min.js"></script>
+  <script src="../assets/js/vendor/qrcode.min.js"></script>
   <script>
     const runBtn = document.getElementById('runBtn');
     const qrResultWrap = document.getElementById('qrResultWrap');
