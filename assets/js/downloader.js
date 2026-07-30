@@ -31,7 +31,7 @@ function dlRenderResults(resultId, mediaList) {
   });
 }
 
-async function dlRun(apiEndpoint, inputId, resultId, statusId, btnId) {
+async function dlRun(apiEndpoint, inputId, resultId, statusId, btnId, extraParams) {
   const input = document.getElementById(inputId);
   const url = (input.value || '').trim();
   const resultEl = document.getElementById(resultId);
@@ -47,7 +47,8 @@ async function dlRun(apiEndpoint, inputId, resultId, statusId, btnId) {
 
   runWithAd(async () => {
     try {
-      const res = await fetch(`${apiEndpoint}?url=${encodeURIComponent(url)}`);
+      const extra = extraParams ? '&' + new URLSearchParams(extraParams).toString() : '';
+      const res = await fetch(`${apiEndpoint}?url=${encodeURIComponent(url)}${extra}`);
       const contentType = res.headers.get('content-type') || '';
       if (!contentType.includes('application/json')) {
         // This happens when /api/* isn't actually running as a serverless

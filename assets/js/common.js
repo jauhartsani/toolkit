@@ -247,7 +247,13 @@ document.addEventListener('DOMContentLoaded', () => {
     Instagram: 'instagram/index.html',
     'Instagram Downloader': 'instagram/index.html',
     TikTok: 'tiktok/index.html',
-    'TikTok Downloader': 'tiktok/index.html'
+    'TikTok Downloader': 'tiktok/index.html',
+    Facebook: 'facebook/index.html',
+    'Facebook Downloader': 'facebook/index.html',
+    X: 'x/index.html',
+    'X Downloader': 'x/index.html',
+    YouTube: 'youtube/index.html',
+    'YouTube Downloader': 'youtube/index.html'
   };
   const isInnerPage = document.querySelector('.tk-logo')?.getAttribute('href')?.startsWith('../');
   document.querySelectorAll('#tk-nav a').forEach(link => {

@@ -1,28 +1,27 @@
 /**
  * GET /api/instagram?url=<instagram post/reel/igtv url>
  *
- * Fetches the public post page server-side (browsers can't do this directly —
- * Instagram blocks cross-origin requests) and extracts the direct media URL(s)
- * from the page's own meta tags / embedded JSON.
+ * Fallback chain:
+ *   1. Public post page — reads og:meta tags and JSON-LD (fast path for
+ *      posts Instagram still serves without a login wall).
+ *   2. The public "/embed/captioned/" page — a lighter render Instagram
+ *      sometimes still serves without the login wall even when the main
+ *      page is gated.
+ *   3. Cobalt (public resolver, shared across all downloaders on this
+ *      site) — re-extracts the post independently and is the most
+ *      resilient fallback when Instagram blocks the request outright.
  *
- * Works for: public photo posts, video posts, Reels, IGTV.
- * Does NOT work for: Stories or full profile browsing — those require an
- * authenticated Instagram session, which this endpoint intentionally does not
- * implement (storing/using someone's IG login is a security and ToS risk).
+ * Works for: public photo posts, video posts, Reels, IGTV, carousels.
+ * Does NOT work for: Stories or private accounts — those require an
+ * authenticated Instagram session, which this endpoint intentionally does
+ * not implement (storing/using someone's IG login is a security/ToS risk).
  *
- * NOTE: Instagram frequently changes its markup, and increasingly serves an
- * anonymous "log in to continue" wall instead of the real post to server-side
- * requests (no cookies, no JS) — that wall is now the #1 cause of extraction
- * failures, more often than the post itself being missing/removed. This file
- * uses three fallback strategies in order:
- *   1. og: meta tags on the normal post page
- *   2. JSON-LD carousel data on the normal post page
- *   3. the public oEmbed-style "/embed/captioned/" page, which Instagram
- *      sometimes still serves without a login wall for public posts even
- *      when the main page is gated
- * and explicitly tells the caller when the failure looks like a login wall,
- * rather than reporting a generic "no media found".
+ * All returned media URLs point through /api/media so the download click
+ * bypasses Instagram's hotlink-protected CDN instead of 403ing.
  */
+
+const { tryCobalt } = require('./_lib/cobalt');
+const { toProxyUrl } = require('./_lib/proxy');
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36';
 
@@ -34,7 +33,6 @@ function normalizeInstagramUrl(raw) {
   return { url: `https://www.instagram.com${u.pathname}`, pathname: u.pathname };
 }
 
-// /p/{code}/, /reel/{code}/, /reels/{code}/, /tv/{code}/ -> {code}
 function extractShortcode(pathname) {
   const match = pathname.match(/\/(?:p|reel|reels|tv)\/([^/?#]+)/);
   return match ? match[1] : null;
@@ -45,19 +43,15 @@ async function fetchHtml(url, referer) {
     headers: {
       'User-Agent': UA,
       'Accept-Language': 'en-US,en;q=0.9',
-      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-      'Sec-Fetch-Mode': 'navigate',
-      'Sec-Fetch-Site': referer ? 'same-origin' : 'none',
+      Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
       ...(referer ? { Referer: referer } : {}),
     },
+    signal: AbortSignal.timeout(20000),
   });
   const body = await res.text();
   return { ok: res.ok, status: res.status, body };
 }
 
-// Instagram's anonymous "log in to continue" wall has consistent markers
-// regardless of exact copy/locale — detect it so we can report the real
-// cause instead of a generic "no media found".
 function looksLikeLoginWall(html) {
   return /Log in to Instagram|loginForm|Log in \u2022 Instagram|"require_login"\s*:\s*true/i.test(html);
 }
@@ -91,27 +85,29 @@ function extractCarouselFromJsonLd(html) {
   return media;
 }
 
-// The /embed/captioned/ page is a lighter-weight public render Instagram
-// exposes for embedding posts on third-party sites. For posts that are
-// still public, it sometimes stays accessible even when the main page
-// redirects anonymous requests to a login wall.
 async function tryEmbedFallback(shortcode) {
   const embedUrl = `https://www.instagram.com/p/${shortcode}/embed/captioned/`;
-  const { ok, status, body } = await fetchHtml(embedUrl, 'https://www.instagram.com/');
-  if (!ok) return { media: [], blocked: false, status };
-  if (looksLikeLoginWall(body)) return { media: [], blocked: true, status };
+  const { ok, body } = await fetchHtml(embedUrl, 'https://www.instagram.com/');
+  if (!ok) return { media: [], blocked: false };
+  if (looksLikeLoginWall(body)) return { media: [], blocked: true };
 
   const media = extractFromMeta(body);
-  if (media.length) return { media, blocked: false, status };
+  if (media.length) return { media, blocked: false };
 
-  // Fallback: some embed pages carry the media URL only inside inline JS
-  // as a raw string rather than an og: tag.
   const videoJsMatch = body.match(/"video_url":"([^"]+)"/);
   const imageJsMatch = body.match(/"display_url":"([^"]+)"/);
-  if (videoJsMatch) return { media: [{ type: 'video', url: decodeEntities(videoJsMatch[1]), thumbnail: imageJsMatch ? decodeEntities(imageJsMatch[1]) : null }], blocked: false, status };
-  if (imageJsMatch) return { media: [{ type: 'photo', url: decodeEntities(imageJsMatch[1]) }], blocked: false, status };
+  if (videoJsMatch) return { media: [{ type: 'video', url: decodeEntities(videoJsMatch[1]), thumbnail: imageJsMatch ? decodeEntities(imageJsMatch[1]) : null }], blocked: false };
+  if (imageJsMatch) return { media: [{ type: 'photo', url: decodeEntities(imageJsMatch[1]) }], blocked: false };
 
-  return { media: [], blocked: false, status };
+  return { media: [], blocked: false };
+}
+
+function toProxiedMedia(rawMedia, label) {
+  return rawMedia.map((m, i) => ({
+    type: m.type,
+    url: toProxyUrl(m.url, m.type === 'photo' ? 'image' : m.type, `${label}-${i + 1}`),
+    thumbnail: m.thumbnail || null,
+  }));
 }
 
 module.exports = async function handler(req, res) {
@@ -124,24 +120,26 @@ module.exports = async function handler(req, res) {
     const shortcode = extractShortcode(pathname);
 
     const { ok, status, body: html } = await fetchHtml(cleanUrl);
-    if (!ok && status !== 200) {
-      // Instagram returns non-200 for some gated posts even before the
-      // login-wall HTML loads; don't give up yet if we have a shortcode
-      // to try the embed fallback with.
-      if (!shortcode) throw new Error(`Instagram returned status ${status}. The post may be private or removed.`);
+    if (!ok && status !== 200 && !shortcode) {
+      throw new Error(`Instagram returned status ${status}. The post may be private or removed.`);
     }
 
-    const mainPageBlocked = looksLikeLoginWall(html);
-    let media = mainPageBlocked ? [] : extractFromMeta(html);
-    const carousel = mainPageBlocked ? [] : extractCarouselFromJsonLd(html);
-    if (carousel.length > 1) media = carousel; // prefer full carousel set when available
+    const mainPageBlocked = looksLikeLoginWall(html || '');
+    let media = mainPageBlocked ? [] : extractFromMeta(html || '');
+    const carousel = mainPageBlocked ? [] : extractCarouselFromJsonLd(html || '');
+    if (carousel.length > 1) media = carousel;
 
     let blockedEverywhere = mainPageBlocked;
 
     if (!media.length && shortcode) {
-      const fallback = await tryEmbedFallback(shortcode);
+      const fallback = await tryEmbedFallback(shortcode).catch(() => ({ media: [], blocked: false }));
       if (fallback.media.length) media = fallback.media;
       blockedEverywhere = mainPageBlocked && fallback.blocked;
+    }
+
+    if (!media.length) {
+      const cobalt = await tryCobalt(cleanUrl, 'video').catch(() => null);
+      if (cobalt) media = cobalt.media;
     }
 
     if (!media.length) {
@@ -159,7 +157,7 @@ module.exports = async function handler(req, res) {
       return;
     }
 
-    res.status(200).json({ success: true, media });
+    res.status(200).json({ success: true, media: toProxiedMedia(media, 'instagram') });
   } catch (err) {
     res.status(400).json({ success: false, error: err.message || 'Failed to process this link.' });
   }
