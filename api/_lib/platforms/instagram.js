@@ -53,6 +53,8 @@ function selectBestImageCandidate(candidates) {
   
   return best.url || null;
 }
+
+function normalizeInstagramUrl(raw) {
   const u = new URL(raw);
   if (!/instagram\.com$/.test(u.hostname.replace(/^www\./, ''))) {
     throw new Error('Link ini bukan link Instagram.');
@@ -253,7 +255,7 @@ async function viaWebInfoApi(url, shortcode) {
 
   if (item.video_versions && item.video_versions.length) {
     const best = item.video_versions[0]; // sudah urut dari kualitas tertinggi
-    const thumbnail = item.image_versions2?.candidates?.[0]?.url || null;
+    const thumbnail = selectBestImageCandidate(item.image_versions2?.candidates || []);
     return { title, thumbnail, duration: item.video_duration || null, uploader, formats: [{ label: 'Video', type: 'video', url: best.url, filesize_approx: null }] };
   }
 
