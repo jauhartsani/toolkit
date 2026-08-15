@@ -325,14 +325,29 @@ async function extractInstagram(url, { audioOnly, baseUrl } = {}) {
   const shortcode = extractShortcode(pathname);
 
   let sawLoginWall = false;
-  const namedAttempts = [
-    ['web-info-api', () => viaWebInfoApi(cleanUrl, shortcode)],  // Prioritas 1: API yang punya original dimensions
-    ['halaman-publik', () => viaPublicPage(cleanUrl, pathname)],
-    ['halaman-publik+facebot-ua', () => viaPublicPageAsFacebot(cleanUrl, pathname)],
-    ['halaman-embed', () => viaEmbedPage(cleanUrl, shortcode)],
-    ['instaloader', () => viaInstaloader(cleanUrl, baseUrl, { audioOnly })],
-    ['cobalt', () => cobaltExtract(cleanUrl, { audioOnly })],
-  ];
+  
+  // Instagram carousel posts sering tidak expose semua carousel items di public page
+  // JSON-LD — lebih reliable gunakan instaloader Python yang specifically designed untuk ini.
+  // Cek dulu: kalau URL-nya /p/{code}/, likely carousel (vs /reel/ yang biasanya single video)
+  const likelyCarousel = /\/p\//.test(pathname);
+  
+  const namedAttempts = likelyCarousel
+    ? [
+        ['instaloader', () => viaInstaloader(cleanUrl, baseUrl, { audioOnly })],  // Prioritas: carousel
+        ['halaman-publik', () => viaPublicPage(cleanUrl, pathname)],
+        ['halaman-publik+facebot-ua', () => viaPublicPageAsFacebot(cleanUrl, pathname)],
+        ['web-info-api', () => viaWebInfoApi(cleanUrl, shortcode)],
+        ['halaman-embed', () => viaEmbedPage(cleanUrl, shortcode)],
+        ['cobalt', () => cobaltExtract(cleanUrl, { audioOnly })],
+      ]
+    : [
+        ['halaman-publik', () => viaPublicPage(cleanUrl, pathname)],  // Non-carousel: try fast method first
+        ['halaman-publik+facebot-ua', () => viaPublicPageAsFacebot(cleanUrl, pathname)],
+        ['web-info-api', () => viaWebInfoApi(cleanUrl, shortcode)],
+        ['halaman-embed', () => viaEmbedPage(cleanUrl, shortcode)],
+        ['instaloader', () => viaInstaloader(cleanUrl, baseUrl, { audioOnly })],
+        ['cobalt', () => cobaltExtract(cleanUrl, { audioOnly })],
+      ];
 
   // Kumpulkan pesan error tiap attempt (bukan cuma yang terakhir) supaya
   // kalau semuanya gagal, kita tahu PERSIS kenapa masing-masing gagal —

@@ -132,7 +132,8 @@
 
     var actions = document.getElementById('resultActions');
     actions.innerHTML = '';
-    data.formats.slice(0, 3).forEach(function(f, idx){
+    // Render semua format (carousel bisa punya banyak item), bukan cuma 3
+    data.formats.forEach(function(f, idx){
       var a = document.createElement('a');
       a.href = f.url;
       a.target = '_blank';
