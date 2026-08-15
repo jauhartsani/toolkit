@@ -124,7 +124,63 @@
     resultError.hidden = true;
     document.getElementById('resultPlatform').textContent = data.platform;
     document.getElementById('resultTitle').textContent = data.title;
-    document.getElementById('resultThumb').src = data.thumbnail || '';
+    
+    // Render preview gallery (thumbnail + semua formats)
+    var previewGallery = document.getElementById('resultPreviewGallery');
+    previewGallery.innerHTML = '';
+    var previewItems = [];
+    
+    // Tambah thumbnail sebagai item pertama
+    if(data.thumbnail){
+      var thumbContainer = document.createElement('div');
+      thumbContainer.className = 'preview-item active';
+      var thumbImg = document.createElement('img');
+      thumbImg.src = data.thumbnail;
+      thumbImg.alt = 'Preview';
+      thumbContainer.appendChild(thumbImg);
+      previewGallery.appendChild(thumbContainer);
+      previewItems.push(thumbContainer);
+    }
+    
+    // Tambah preview dari tiap format (misal carousel images)
+    if(data.formats && data.formats.length > 0){
+      // Jika format punya preview URL, gunakan itu
+      data.formats.forEach(function(f, idx){
+        if(f.preview || f.url){
+          var item = document.createElement('div');
+          item.className = 'preview-item';
+          var img = document.createElement('img');
+          img.src = f.preview || f.url;
+          img.alt = 'Preview ' + (idx + 1);
+          img.dataset.formatIdx = idx;
+          item.appendChild(img);
+          previewGallery.appendChild(item);
+          previewItems.push(item);
+        }
+      });
+    }
+    
+    // Buat carousel navigation jika ada lebih dari 1 item
+    if(previewItems.length > 1){
+      var nav = document.createElement('div');
+      nav.className = 'preview-nav';
+      previewItems.forEach(function(item, idx){
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.setAttribute('aria-label', 'Preview ' + (idx + 1));
+        if(idx === 0) btn.className = 'active';
+        btn.addEventListener('click', function(){
+          // Tampilkan item yang dipilih
+          previewItems.forEach(function(p){ p.classList.remove('active'); });
+          document.querySelectorAll('.preview-nav button').forEach(function(b){ b.classList.remove('active'); });
+          item.classList.add('active');
+          btn.classList.add('active');
+        });
+        nav.appendChild(btn);
+      });
+      previewGallery.appendChild(nav);
+    }
+    
     var metaBits = [];
     if(data.uploader) metaBits.push(data.uploader);
     if(data.duration) metaBits.push(Math.round(data.duration) + 's');
