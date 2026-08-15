@@ -110,8 +110,14 @@ module.exports = async (req, res) => {
     return;
   }
 
+  // Dipakai instagram.js buat internal fetch ke api/instagram.py (runtime
+  // Python terpisah yang membungkus parth-dl) — function itu sendiri tidak
+  // tahu domain deployment-nya, jadi harus dikasih tahu dari sini.
+  const proto = req.headers['x-forwarded-proto'] || 'https';
+  const baseUrl = req.headers.host ? `${proto}://${req.headers.host}` : null;
+
   try {
-    const result = await EXTRACTORS[platform](url, { audioOnly });
+    const result = await EXTRACTORS[platform](url, { audioOnly, baseUrl });
 
     let formats = result.formats || [];
     if (audioOnly) {

@@ -257,7 +257,54 @@ async function viaWebInfoApi(url, shortcode) {
   throw new Error('Web info API tidak punya media yang bisa dipakai di response-nya.');
 }
 
-async function extractInstagram(url, { audioOnly } = {}) {
+// Panggil api/instagram.py (runtime Python Vercel terpisah) yang membungkus
+// library `parth-dl` (github.com/parthmax2/parth-dl, MIT) — proyek pihak
+// ketiga yang aktif di-maintain dan spesifik menangani Reels/Carousel
+// Instagram tanpa login. Didelegasikan ke library asli (bukan di-port
+// manual ke JS) karena kami tidak punya akses baca source-nya langsung
+// saat menulis extractor ini — lihat komentar lengkap di api/instagram.py.
+//
+// `baseUrl` WAJIB diisi oleh caller (extract.js, yang tahu host request
+// masuk) supaya internal fetch ke "/api/instagram" tahu domain yang benar
+// — function ini sendiri tidak tahu domain deployment-nya.
+async function viaParthDl(url, baseUrl, { audioOnly } = {}) {
+  if (!baseUrl) throw new Error('viaParthDl butuh baseUrl (dari request masuk), tapi tidak diisi.');
+
+  const endpoint = `${baseUrl.replace(/\/+$/, '')}/api/instagram`;
+  const { ok, status, data } = await fetchJson(
+    endpoint,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ url, audio_only: !!audioOnly }),
+    },
+    25000 // parth-dl bisa lebih lambat (multi-layer + rate limiter internal)
+  );
+
+  if (!data) throw new Error(`api/instagram.py merespons status ${status} tanpa data.`);
+  if (data.error) throw new Error(`parth-dl: ${data.error}`);
+
+  if (data.parse_error) {
+    // _normalize() di Python gagal memetakan field — bukan berarti
+    // ekstraksinya gagal, cuma nama key dict-nya belum kita kenali. Lempar
+    // error yang eksplisit menyertakan raw JSON supaya gampang di-debug
+    // dan _normalize() di api/instagram.py bisa langsung diperbaiki.
+    throw new Error(`parth-dl berhasil ekstrak tapi format response belum dikenali (${data.parse_error}). Raw: ${JSON.stringify(data.raw).slice(0, 300)}`);
+  }
+  if (!ok || !data.formats || !data.formats.length) {
+    throw new Error(`parth-dl tidak mengembalikan format media yang bisa dipakai (status ${status}).`);
+  }
+
+  return {
+    title: data.title || 'Post Instagram',
+    thumbnail: data.thumbnail || null,
+    duration: data.duration || null,
+    uploader: data.uploader || null,
+    formats: data.formats,
+  };
+}
+
+async function extractInstagram(url, { audioOnly, baseUrl } = {}) {
   const { url: cleanUrl, pathname } = normalizeInstagramUrl(url);
   const shortcode = extractShortcode(pathname);
 
@@ -267,6 +314,7 @@ async function extractInstagram(url, { audioOnly } = {}) {
     ['halaman-publik+facebot-ua', () => viaPublicPageAsFacebot(cleanUrl, pathname)],
     ['halaman-embed', () => viaEmbedPage(cleanUrl, shortcode)],
     ['web-info-api', () => viaWebInfoApi(cleanUrl, shortcode)],
+    ['parth-dl', () => viaParthDl(cleanUrl, baseUrl, { audioOnly })],
     ['cobalt', () => cobaltExtract(cleanUrl, { audioOnly })],
   ];
 

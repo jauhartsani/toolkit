@@ -23,8 +23,31 @@ yang diganti.
   halaman post publik dengan UA crawler preview-link Meta ("Facebot",
   sering lolos dari login wall) → halaman embed publik
   (`/embed/captioned/`) → web info API internal instagram.com
-  (`X-IG-App-ID`) → Cobalt. **Tidak butuh cookies/login lagi** untuk
-  konten publik biasa.
+  (`X-IG-App-ID`) → **`parth-dl`** (library Python pihak ketiga, lihat di
+  bawah) → Cobalt. **Tidak butuh cookies/login lagi** untuk konten
+  publik biasa.
+
+### Metode baru: `api/instagram.py` (pakai library `parth-dl`)
+
+Reels & carousel makin sering gagal di 4 metode scraping statis di atas
+(Instagram tidak lagi menaruh link video di HTML mentah). Daripada terus
+menebak teknik baru, ditambahkan **satu function Python terpisah**
+(`api/instagram.py`, Vercel mendukung Node.js + Python berdampingan dalam
+1 project) yang membungkus library open-source
+[`parth-dl`](https://github.com/parthmax2/parth-dl) (MIT, aktif
+di-maintain) — dia yang mengurus scraping/GraphQL Instagram-nya, kita
+tinggal pakai. `api/_lib/platforms/instagram.js` (Node) memanggil endpoint
+ini lewat HTTP internal sebagai attempt sebelum Cobalt.
+
+**Belum pernah dijalankan live** (ditulis tanpa akses jaringan buat
+verifikasi), jadi `api/instagram.py` sengaja defensif: kalau struktur
+dict hasil `parth_dl.get_info()` tidak cocok dengan yang diperkirakan,
+response tetap 200 tapi isinya `{ "parse_error": "...", "raw": {...} }` —
+`raw` inilah JSON asli dari parth-dl apa adanya. Kalau kamu lihat pesan
+error yang menyertakan `Raw: {...}` setelah deploy & testing, **paste ke
+saya** — dari situ saya bisa langsung perbaiki fungsi `_normalize()` di
+`api/instagram.py` (baris field-mapping-nya saja, tanpa perlu menebak
+struktur dari nol lagi).
 - **Facebook** — halaman embed `plugins/video.php` → scraping halaman
   watch/reel langsung → Cobalt.
 - **X (Twitter)** — `vxtwitter.com` API (utama) → Cobalt.
