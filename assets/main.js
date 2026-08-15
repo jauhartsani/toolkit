@@ -125,57 +125,50 @@
     document.getElementById('resultPlatform').textContent = data.platform;
     document.getElementById('resultTitle').textContent = data.title;
     
-    // Render preview gallery (thumbnail + semua formats dalam grid)
+    // Render preview gallery dengan button download terintegrasi
     var previewGallery = document.getElementById('resultPreviewGallery');
     previewGallery.innerHTML = '';
-    
-    // Collect semua preview items
-    var allPreviews = [];
-    
-    // Tambah thumbnail sebagai item pertama
-    if(data.thumbnail){
-      allPreviews.push({ src: data.thumbnail, label: 'Preview utama' });
-    }
-    
-    // Tambah preview dari tiap format (misal carousel images)
-    if(data.formats && data.formats.length > 0){
-      data.formats.forEach(function(f, idx){
-        if(f.preview || f.url){
-          allPreviews.push({ src: f.preview || f.url, label: f.label });
-        }
-      });
-    }
-    
-    // Render semua preview dalam grid layout
-    allPreviews.forEach(function(preview){
-      var item = document.createElement('div');
-      item.className = 'preview-item';
-      var img = document.createElement('img');
-      img.src = preview.src;
-      img.alt = preview.label;
-      item.appendChild(img);
-      previewGallery.appendChild(item);
-    });
     
     var metaBits = [];
     if(data.uploader) metaBits.push(data.uploader);
     if(data.duration) metaBits.push(Math.round(data.duration) + 's');
     document.getElementById('resultMeta').textContent = metaBits.join(' · ');
 
+    // Render preview + download untuk setiap format
+    if(data.formats && data.formats.length > 0){
+      data.formats.forEach(function(f, idx){
+        var itemRow = document.createElement('div');
+        itemRow.className = 'preview-row';
+        
+        // Preview image
+        var previewContainer = document.createElement('div');
+        previewContainer.className = 'preview-item';
+        var img = document.createElement('img');
+        img.src = f.preview || f.url || data.thumbnail || '';
+        img.alt = f.label;
+        previewContainer.appendChild(img);
+        itemRow.appendChild(previewContainer);
+        
+        // Download button
+        var btnContainer = document.createElement('div');
+        btnContainer.className = 'preview-download';
+        var downloadLink = document.createElement('a');
+        downloadLink.href = f.url;
+        downloadLink.target = '_blank';
+        downloadLink.rel = 'noopener';
+        downloadLink.download = '';
+        var size = formatSize(f.filesize_approx);
+        downloadLink.textContent = 'Download ' + f.label + (size ? ' (' + size + ')' : '');
+        btnContainer.appendChild(downloadLink);
+        itemRow.appendChild(btnContainer);
+        
+        previewGallery.appendChild(itemRow);
+      });
+    }
+    
+    // Simpan reference ke result-actions untuk compatibility (jika diperlukan)
     var actions = document.getElementById('resultActions');
     actions.innerHTML = '';
-    // Render semua format (carousel bisa punya banyak item), bukan cuma 3
-    data.formats.forEach(function(f, idx){
-      var a = document.createElement('a');
-      a.href = f.url;
-      a.target = '_blank';
-      a.rel = 'noopener';
-      a.download = '';
-      if(idx > 0) a.className = 'secondary';
-      var size = formatSize(f.filesize_approx);
-      a.textContent = 'Download ' + f.label + (size ? ' (' + size + ')' : '');
-      actions.appendChild(a);
-    });
 
     resultCard.hidden = false;
     // restart the entrance animation
