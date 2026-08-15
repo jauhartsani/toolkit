@@ -38,7 +38,6 @@
   var examples = [
     'tiktok.com/@user/video/7291...',
     'instagram.com/reel/C8f2x...',
-    'youtube.com/watch?v=dQw4w9...',
     'facebook.com/watch/?v=1029...',
     'x.com/user/status/1837...'
   ];

@@ -13,7 +13,6 @@ const { extractTiktok } = require('./_lib/platforms/tiktok');
 const { extractInstagram } = require('./_lib/platforms/instagram');
 const { extractFacebook } = require('./_lib/platforms/facebook');
 const { extractTwitter } = require('./_lib/platforms/twitter');
-const { extractYoutube } = require('./_lib/platforms/youtube');
 const { toProxyUrl } = require('./_lib/proxy-url');
 
 const PLATFORM_PATTERNS = {
@@ -21,7 +20,6 @@ const PLATFORM_PATTERNS = {
   instagram: /instagram\.com/i,
   facebook: /facebook\.com|fb\.watch/i,
   x: /(?:twitter|x)\.com/i,
-  youtube: /youtube\.com|youtu\.be/i,
 };
 
 const EXTRACTORS = {
@@ -29,7 +27,6 @@ const EXTRACTORS = {
   instagram: extractInstagram,
   facebook: extractFacebook,
   x: extractTwitter,
-  youtube: extractYoutube,
 };
 
 function detectPlatform(url) {
@@ -91,7 +88,7 @@ module.exports = async (req, res) => {
 
   const platform = detectPlatform(url);
   if (!platform) {
-    send(res, 400, { detail: 'Link tidak dikenali. Dukung: TikTok, Instagram, Facebook, X, YouTube.' });
+    send(res, 400, { detail: 'Link tidak dikenali. Dukung: TikTok, Instagram, Facebook, X.' });
     return;
   }
 

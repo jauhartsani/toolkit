@@ -1,6 +1,6 @@
 /**
  * api/_lib/cobalt.js
- * Fallback terakhir untuk semua platform (dan metode utama untuk YouTube).
+ * Fallback terakhir untuk semua platform.
  * Dipakai kalau metode utama (tikwm/vxtwitter/embed-scraping/dst) gagal.
  *
  * PENTING — DUA HAL BERUBAH DARI VERSI SEBELUMNYA:

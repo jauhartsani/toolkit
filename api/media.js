@@ -3,7 +3,7 @@
  * GET /api/media?url=<direct-cdn-url>&platform=<name>&filename=<name>
  *
  * Proxy yang menambahkan header Referer yang benar per-CDN (TikTok/
- * Instagram/Facebook/X/YouTube semua memblokir hotlink tanpa referer
+ * Instagram/Facebook/X semua memblokir hotlink tanpa referer
  * yang cocok) dan memaksa file benar-benar ke-download lewat header
  * Content-Disposition (bukan cuma kebuka di tab baru).
  */
@@ -16,7 +16,6 @@ const REFERER_BY_PLATFORM = {
   instagram: 'https://www.instagram.com/',
   facebook: 'https://www.facebook.com/',
   x: 'https://twitter.com/',
-  youtube: 'https://www.youtube.com/',
 };
 
 module.exports = async (req, res) => {
