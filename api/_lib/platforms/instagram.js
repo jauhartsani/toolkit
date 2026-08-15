@@ -33,7 +33,26 @@ const { cobaltExtract } = require('../cobalt');
 // resmi" yang diminta beberapa endpoint internal IG.
 const IG_WEB_APP_ID = '936619743392459';
 
-function normalizeInstagramUrl(raw) {
+function selectBestImageCandidate(candidates) {
+  // Instagram's image_versions2.candidates array contains multiple versions
+  // of the same image (different sizes/aspect ratios). Find the one with the
+  // largest dimensions (highest quality/original aspect ratio).
+  if (!Array.isArray(candidates) || candidates.length === 0) return null;
+  
+  // Find candidate with largest area (width * height)
+  let best = candidates[0];
+  let bestArea = (best.width || 0) * (best.height || 0);
+  
+  for (let i = 1; i < candidates.length; i++) {
+    const area = (candidates[i].width || 0) * (candidates[i].height || 0);
+    if (area > bestArea) {
+      bestArea = area;
+      best = candidates[i];
+    }
+  }
+  
+  return best.url || null;
+}
   const u = new URL(raw);
   if (!/instagram\.com$/.test(u.hostname.replace(/^www\./, ''))) {
     throw new Error('Link ini bukan link Instagram.');
@@ -243,13 +262,15 @@ async function viaWebInfoApi(url, shortcode) {
       if (m.video_versions && m.video_versions.length) {
         return { label: `Video ${i + 1}`, type: 'video', url: m.video_versions[0].url, filesize_approx: null };
       }
-      const img = m.image_versions2?.candidates?.[0]?.url;
+      // Select highest-quality candidate (largest dimensions = original aspect ratio)
+      const img = selectBestImageCandidate(m.image_versions2?.candidates || []);
       return { label: `Foto ${i + 1}`, type: 'photo', url: img, filesize_approx: null };
     }).filter((f) => f.url);
     if (formats.length) return { title, thumbnail: formats[0].url, duration: null, uploader, formats };
   }
 
-  const image = item.image_versions2?.candidates?.[0]?.url;
+  // Select highest-quality candidate (largest dimensions = original aspect ratio)
+  const image = selectBestImageCandidate(item.image_versions2?.candidates || []);
   if (image) {
     return { title, thumbnail: image, duration: null, uploader, formats: [{ label: 'Foto', type: 'photo', url: image, filesize_approx: null }] };
   }
@@ -303,10 +324,10 @@ async function extractInstagram(url, { audioOnly, baseUrl } = {}) {
 
   let sawLoginWall = false;
   const namedAttempts = [
+    ['web-info-api', () => viaWebInfoApi(cleanUrl, shortcode)],  // Prioritas 1: API yang punya original dimensions
     ['halaman-publik', () => viaPublicPage(cleanUrl, pathname)],
     ['halaman-publik+facebot-ua', () => viaPublicPageAsFacebot(cleanUrl, pathname)],
     ['halaman-embed', () => viaEmbedPage(cleanUrl, shortcode)],
-    ['web-info-api', () => viaWebInfoApi(cleanUrl, shortcode)],
     ['instaloader', () => viaInstaloader(cleanUrl, baseUrl, { audioOnly })],
     ['cobalt', () => cobaltExtract(cleanUrl, { audioOnly })],
   ];
