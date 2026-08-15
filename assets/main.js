@@ -1,4 +1,41 @@
 (function(){
+  // language switcher
+  function setupLanguageSwitcher() {
+    var langSwitch = document.getElementById('langSwitch');
+    var langSwitchMobile = document.getElementById('langSwitchMobile');
+    var currentPath = window.location.pathname;
+    var isEnglish = currentPath.startsWith('/en/');
+
+    if (langSwitch) {
+      langSwitch.textContent = isEnglish ? 'Bahasa' : 'English';
+      langSwitch.addEventListener('click', function() {
+        if (isEnglish) {
+          // Go to Indonesian version
+          var newPath = currentPath.replace('/en/', '/');
+          window.location.href = newPath || '/';
+        } else {
+          // Go to English version
+          var newPath = '/en' + (currentPath === '/' ? '/' : currentPath);
+          window.location.href = newPath;
+        }
+      });
+    }
+
+    if (langSwitchMobile) {
+      langSwitchMobile.textContent = isEnglish ? 'Bahasa' : 'English';
+      langSwitchMobile.addEventListener('click', function() {
+        if (isEnglish) {
+          var newPath = currentPath.replace('/en/', '/');
+          window.location.href = newPath || '/';
+        } else {
+          var newPath = '/en' + (currentPath === '/' ? '/' : currentPath);
+          window.location.href = newPath;
+        }
+      });
+    }
+  }
+  setupLanguageSwitcher();
+
   // mobile nav
   var toggle = document.querySelector('.nav-toggle');
   var mnav = document.getElementById('mobile-nav');
@@ -6,7 +43,7 @@
     var open = mnav.classList.toggle('open');
     toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
   });
-  document.querySelectorAll('.mobile-nav a').forEach(function(a){
+  document.querySelectorAll('.mobile-nav a, .mobile-nav button').forEach(function(a){
     a.addEventListener('click', function(){ mnav.classList.remove('open'); toggle.setAttribute('aria-expanded','false'); });
   });
 
@@ -43,11 +80,14 @@
   ];
   var input = document.getElementById('urlInput');
   var i = 0;
+  var currentPath = window.location.pathname;
+  var isEnglish = currentPath.startsWith('/en/');
+  var placeholderPrefix = isEnglish ? 'example: ' : 'contoh: ';
   if(input && !reduceMotion){
     setInterval(function(){
       i = (i+1) % examples.length;
       if(document.activeElement !== input){
-        input.setAttribute('placeholder', 'contoh: ' + examples[i]);
+        input.setAttribute('placeholder', placeholderPrefix + examples[i]);
       }
     }, 2600);
   }
