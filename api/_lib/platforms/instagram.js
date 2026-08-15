@@ -258,17 +258,18 @@ async function viaWebInfoApi(url, shortcode) {
 }
 
 // Panggil api/instagram.py (runtime Python Vercel terpisah) yang membungkus
-// library `parth-dl` (github.com/parthmax2/parth-dl, MIT) — proyek pihak
-// ketiga yang aktif di-maintain dan spesifik menangani Reels/Carousel
-// Instagram tanpa login. Didelegasikan ke library asli (bukan di-port
-// manual ke JS) karena kami tidak punya akses baca source-nya langsung
-// saat menulis extractor ini — lihat komentar lengkap di api/instagram.py.
+// `instaloader` (github.com/instaloader/instaloader, MIT, 13.000+ stars,
+// aktif di-maintain) — library scraping Instagram paling matang yang ada,
+// dipakai lewat Python karena API class Post-nya sudah stabil &
+// terdokumentasi resmi (jauh lebih pasti daripada menebak struktur
+// endpoint scraping sendiri di JS). Lihat komentar lengkap di
+// api/instagram.py, termasuk soal rate-limit anonim dari IP cloud.
 //
 // `baseUrl` WAJIB diisi oleh caller (extract.js, yang tahu host request
 // masuk) supaya internal fetch ke "/api/instagram" tahu domain yang benar
 // — function ini sendiri tidak tahu domain deployment-nya.
-async function viaParthDl(url, baseUrl, { audioOnly } = {}) {
-  if (!baseUrl) throw new Error('viaParthDl butuh baseUrl (dari request masuk), tapi tidak diisi.');
+async function viaInstaloader(url, baseUrl, { audioOnly } = {}) {
+  if (!baseUrl) throw new Error('viaInstaloader butuh baseUrl (dari request masuk), tapi tidak diisi.');
 
   const endpoint = `${baseUrl.replace(/\/+$/, '')}/api/instagram`;
   const { ok, status, data } = await fetchJson(
@@ -278,21 +279,13 @@ async function viaParthDl(url, baseUrl, { audioOnly } = {}) {
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify({ url, audio_only: !!audioOnly }),
     },
-    25000 // parth-dl bisa lebih lambat (multi-layer + rate limiter internal)
+    25000
   );
 
   if (!data) throw new Error(`api/instagram.py merespons status ${status} tanpa data.`);
-  if (data.error) throw new Error(`parth-dl: ${data.error}`);
-
-  if (data.parse_error) {
-    // _normalize() di Python gagal memetakan field — bukan berarti
-    // ekstraksinya gagal, cuma nama key dict-nya belum kita kenali. Lempar
-    // error yang eksplisit menyertakan raw JSON supaya gampang di-debug
-    // dan _normalize() di api/instagram.py bisa langsung diperbaiki.
-    throw new Error(`parth-dl berhasil ekstrak tapi format response belum dikenali (${data.parse_error}). Raw: ${JSON.stringify(data.raw).slice(0, 300)}`);
-  }
+  if (data.error) throw new Error(`instaloader: ${data.error}`);
   if (!ok || !data.formats || !data.formats.length) {
-    throw new Error(`parth-dl tidak mengembalikan format media yang bisa dipakai (status ${status}).`);
+    throw new Error(`instaloader tidak mengembalikan format media yang bisa dipakai (status ${status}).`);
   }
 
   return {
@@ -314,7 +307,7 @@ async function extractInstagram(url, { audioOnly, baseUrl } = {}) {
     ['halaman-publik+facebot-ua', () => viaPublicPageAsFacebot(cleanUrl, pathname)],
     ['halaman-embed', () => viaEmbedPage(cleanUrl, shortcode)],
     ['web-info-api', () => viaWebInfoApi(cleanUrl, shortcode)],
-    ['parth-dl', () => viaParthDl(cleanUrl, baseUrl, { audioOnly })],
+    ['instaloader', () => viaInstaloader(cleanUrl, baseUrl, { audioOnly })],
     ['cobalt', () => cobaltExtract(cleanUrl, { audioOnly })],
   ];
 

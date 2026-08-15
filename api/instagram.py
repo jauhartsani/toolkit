@@ -1,119 +1,80 @@
 """
 api/instagram.py — Vercel Python Serverless Function (runtime terpisah dari
-Node.js). Membungkus library `parth-dl` (https://github.com/parthmax2/parth-dl,
-MIT, aktif di-maintain per Okt 2025) yang punya multi-layer extraction khusus
-Instagram (Reels/Post/Carousel) tanpa login.
+Node.js api/*.js). Membungkus `instaloader` (github.com/instaloader/instaloader,
+MIT, 13.000+ stars, aktif di-maintain — commit terakhir Jul 2026) untuk
+Instagram Reels/Post/Carousel tanpa login.
 
-KENAPA PYTHON TERPISAH, BUKAN DI-PORT KE JS:
-extract.js (Node) tidak tahu detail internal teknik scraping parth-dl (kami
-tidak punya akses baca source-nya secara langsung dari sini) — daripada
-menebak dan menulis ulang logikanya di JS (yang berisiko salah), endpoint
-ini memanggil library aslinya apa adanya. api/_lib/platforms/instagram.js
-(Node) memanggil endpoint INI lewat HTTP sebagai salah satu attempt sebelum
-Cobalt — lihat comment di sana.
+KENAPA GANTI DARI `parth-dl` KE `instaloader`:
+`parth-dl` (proyek kecil, 24 stars) strukturnya tidak terdokumentasi dan
+kami tidak bisa verifikasi bentuk return dict-nya tanpa akses jaringan.
+`instaloader` jauh lebih matang dan API class `Post`-nya (is_video,
+video_url, url, typename, get_sidecar_nodes(), owner_username, dst) sudah
+stabil bertahun-tahun dan terdokumentasi resmi — jauh lebih kecil
+kemungkinan salah tebak nama field.
+
+CATATAN PENTING — RATE LIMIT ANONIM DARI IP CLOUD:
+Instagram membatasi akses tanpa login jauh lebih ketat untuk request yang
+datang dari IP cloud/VPS/serverless (persis kondisi Vercel function ini)
+dibanding dari IP rumahan biasa — bisa kena HTTP 429 walau cuma beberapa
+request. Ini BUKAN bug di kode ini; ini karakteristik Instagram sendiri.
+Kalau ini jadi masalah nyata di produksi (429 sering muncul), solusi yang
+tersedia:
+  1. Retry dengan jeda (sudah ada sedikit di bawah, tapi tidak menjamin).
+  2. Login pakai session file (env var IG_SESSION_* ), yang menurut
+     dokumentasi instaloader tidak kena limit seketat mode anonim — tapi
+     ini butuh akun IG terpisah yang disiapkan khusus untuk ini (ada
+     risiko akun kena flag Instagram, jadi sebaiknya bukan akun utama).
+  3. Cobalt (fallback terakhir di urutan attempts) tetap ada sebagai
+     pilihan kalau instaloader juga gagal.
 
 KONTRAK RESPONSE (dipakai instagram.js sisi Node):
 Sukses -> 200 { title, thumbnail, duration, uploader, formats: [{type, url, label}] }
 Gagal  -> 4xx/5xx { error: "pesan" }
-
-CATATAN PENTING — BELUM PERNAH DIJALANKAN LIVE:
-Kode ini ditulis tanpa akses jaringan untuk verifikasi langsung, karena kami
-tidak tahu PERSIS struktur dict yang dikembalikan `parth_dl.get_info()` atau
-`InstagramDownloader.get_info()`. Untuk itu handler ini SENGAJA defensif:
-- Kalau parsing "shape yang diharapkan" gagal, response tetap 200 tapi
-  menyertakan field `raw` (dict asli dari parth-dl apa adanya) sekaligus
-  field `parse_error` yang menjelaskan kenapa auto-mapping gagal — supaya
-  begitu di-test sekali, kita langsung tahu nama key yang benar dari
-  `raw` dan tinggal sesuaikan fungsi `_normalize()` di bawah tanpa
-  perlu menebak lagi dari nol.
-- best-effort mengecek beberapa kemungkinan nama field umum (title/caption,
-  thumbnail/thumbnail_url/cover, formats/media/urls, url/download_url/src,
-  dst) sebelum menyerah ke mode `raw`.
 """
 
 import json
+import re
 from http.server import BaseHTTPRequestHandler
 
 try:
-    from parth_dl import InstagramDownloader
+    import instaloader
     IMPORT_ERROR = None
 except Exception as exc:  # pragma: no cover - hanya kalau requirements.txt gagal install
-    InstagramDownloader = None
+    instaloader = None
     IMPORT_ERROR = str(exc)
 
-
-def _first(d, keys, default=None):
-    """Ambil value pertama yang ketemu dari beberapa kemungkinan nama key."""
-    for k in keys:
-        if isinstance(d, dict) and k in d and d[k] not in (None, ""):
-            return d[k]
-    return default
+SHORTCODE_RE = re.compile(r"/(?:p|reel|reels|tv)/([^/?#]+)")
 
 
-def _guess_type(item):
-    t = _first(item, ["type", "kind", "media_type"])
-    if t:
-        t = str(t).lower()
-        if "video" in t:
-            return "video"
-        if "audio" in t:
-            return "audio"
-        if "image" in t or "photo" in t:
-            return "photo"
-    url = _first(item, ["url", "download_url", "src", "video_url", "image_url"]) or ""
-    if any(ext in url.lower() for ext in [".mp4", ".mov", ".m4v"]):
-        return "video"
-    if any(ext in url.lower() for ext in [".jpg", ".jpeg", ".png", ".webp"]):
-        return "photo"
-    return "video"
+def extract_shortcode(url):
+    m = SHORTCODE_RE.search(url)
+    if not m:
+        raise ValueError("Tidak bisa menemukan shortcode dari URL Instagram ini.")
+    return m.group(1)
 
 
-def _normalize(info):
-    """
-    Coba petakan dict hasil parth-dl ke kontrak {title, thumbnail, duration,
-    uploader, formats}. Mengembalikan (result, error) — error diisi kalau
-    mapping gagal total (formats kosong), supaya caller bisa fallback ke
-    mode `raw`.
-    """
-    if not isinstance(info, dict):
-        return None, f"get_info() tidak mengembalikan dict, tapi {type(info).__name__}."
+def build_context():
+    # quiet=True supaya tidak print ke stdout (Vercel function log jadi bersih).
+    # sleep=True (default) tetap dibiarkan aktif — instaloader punya rate
+    # limiter internalnya sendiri, jangan dimatikan supaya tidak makin
+    # gampang kena block.
+    return instaloader.InstaloaderContext(sleep=True, quiet=True, user_agent=None)
 
-    title = _first(info, ["title", "caption", "text", "description"], "Post Instagram")
-    thumbnail = _first(info, ["thumbnail", "thumbnail_url", "cover", "cover_url", "poster"])
-    duration = _first(info, ["duration", "video_duration", "length"])
-    uploader = _first(info, ["uploader", "username", "author", "owner"])
 
-    # Carousel/multi-media: cari list di beberapa kemungkinan key.
-    media_list = _first(info, ["formats", "media", "medias", "items", "resources", "urls"])
-
+def post_to_formats(post):
     formats = []
-    if isinstance(media_list, list) and media_list:
-        for i, item in enumerate(media_list):
-            if isinstance(item, str):
-                formats.append({"type": _guess_type({"url": item}), "url": item, "label": f"Media {i + 1}"})
-                continue
-            if not isinstance(item, dict):
-                continue
-            url = _first(item, ["url", "download_url", "src", "video_url", "image_url"])
-            if not url:
-                continue
-            formats.append({"type": _guess_type(item), "url": url, "label": _first(item, ["label", "quality", "resolution"], f"Media {i + 1}")})
+    if post.typename == "GraphSidecar":
+        # Carousel: banyak media (foto/video campur), iterasi tiap slide.
+        for i, node in enumerate(post.get_sidecar_nodes()):
+            if node.is_video:
+                formats.append({"type": "video", "url": node.video_url, "label": f"Video {i + 1}"})
+            else:
+                formats.append({"type": "photo", "url": node.display_url, "label": f"Foto {i + 1}"})
+    elif post.is_video:
+        formats.append({"type": "video", "url": post.video_url, "label": "Video"})
     else:
-        # Bukan carousel — mungkin field url langsung di root dict.
-        url = _first(info, ["url", "download_url", "src", "video_url", "image_url"])
-        if url:
-            formats.append({"type": _guess_type(info), "url": url, "label": "Media"})
-
-    if not formats:
-        return None, "Tidak ketemu field media/url yang dikenal di dict hasil get_info()."
-
-    return {
-        "title": title,
-        "thumbnail": thumbnail,
-        "duration": duration,
-        "uploader": uploader,
-        "formats": formats,
-    }, None
+        formats.append({"type": "photo", "url": post.url, "label": "Foto"})
+    return formats
 
 
 class handler(BaseHTTPRequestHandler):
@@ -134,8 +95,8 @@ class handler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_POST(self):
-        if InstagramDownloader is None:
-            self._send(500, {"error": f"Library parth-dl gagal di-import: {IMPORT_ERROR}"})
+        if instaloader is None:
+            self._send(500, {"error": f"Library instaloader gagal di-import: {IMPORT_ERROR}"})
             return
 
         try:
@@ -152,17 +113,36 @@ class handler(BaseHTTPRequestHandler):
             return
 
         try:
-            dl = InstagramDownloader(verbose=False)
-            info = dl.get_info(url)
+            shortcode = extract_shortcode(url)
+        except ValueError as exc:
+            self._send(400, {"error": str(exc)})
+            return
+
+        try:
+            context = build_context()
+            post = instaloader.Post.from_shortcode(context, shortcode)
+            formats = post_to_formats(post)
+
+            if not formats:
+                self._send(422, {"error": "instaloader tidak menemukan media pada post ini."})
+                return
+
+            self._send(200, {
+                "title": (post.caption or "Post Instagram")[:150],
+                "thumbnail": post.url,
+                "duration": getattr(post, "video_duration", None) if post.is_video else None,
+                "uploader": post.owner_username,
+                "formats": formats,
+            })
+        except instaloader.exceptions.LoginRequiredException:
+            self._send(422, {"error": "Instagram meminta login untuk post ini (kemungkinan akun private)."})
+        except instaloader.exceptions.PrivateProfileNotFollowedException:
+            self._send(422, {"error": "Akun ini private."})
+        except instaloader.exceptions.ConnectionException as exc:
+            msg = str(exc)
+            if "429" in msg or "Too many" in msg.lower() or "please wait" in msg.lower():
+                self._send(429, {"error": f"Instagram membatasi rate request anonim (429) dari server ini: {msg}"})
+            else:
+                self._send(502, {"error": f"instaloader gagal konek ke Instagram: {msg}"})
         except Exception as exc:
-            self._send(422, {"error": f"parth-dl gagal mengekstrak: {exc}"})
-            return
-
-        result, err = _normalize(info)
-        if result is None:
-            # Mapping gagal — kirim raw dict-nya supaya bisa langsung
-            # ketahuan nama field yang benar begitu di-test sekali.
-            self._send(200, {"parse_error": err, "raw": info})
-            return
-
-        self._send(200, result)
+            self._send(422, {"error": f"instaloader gagal mengekstrak: {exc}"})

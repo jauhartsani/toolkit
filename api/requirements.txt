@@ -1,1 +1,1 @@
-parth-dl
+instaloader
