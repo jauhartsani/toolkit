@@ -35,6 +35,29 @@ def build_ydl_opts(audio_only: bool) -> dict:
         "skip_download": True,
         "noplaylist": True,
         "format": "bestaudio/best" if audio_only else "best",
+        # Gagal cepat kalau platform sumber lambat merespons, daripada
+        # menggantung sampai Vercel memotong paksa functionnya (504 kosong).
+        "socket_timeout": 12,
+        # IP server cloud (Vercel/AWS/dll) sering dianggap "bot" oleh
+        # YouTube/TikTok/Instagram. Dua trik di bawah mengurangi kemungkinan
+        # itu, walau tidak 100% menjamin selalu lolos:
+        # 1) Minta yt-dlp berpura-pura sebagai client Android/iOS YouTube,
+        #    yang jarang kena tembok "Sign in to confirm you're not a bot"
+        #    dibanding client web biasa.
+        "extractor_args": {
+            "youtube": {
+                "player_client": ["android", "ios", "web"],
+            }
+        },
+        # 2) Pakai User-Agent mobile asli, bukan default python-requests,
+        #    supaya request terlihat seperti dari HP biasa.
+        "http_headers": {
+            "User-Agent": (
+                "Mozilla/5.0 (Linux; Android 13; Pixel 7) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/124.0.0.0 Mobile Safari/537.36"
+            ),
+        },
     }
 
 
@@ -47,6 +70,9 @@ def run_extract(url: str, audio_only: bool):
         with yt_dlp.YoutubeDL(build_ydl_opts(audio_only)) as ydl:
             info = ydl.extract_info(url, download=False)
     except yt_dlp.utils.DownloadError as e:
+        msg = str(e)
+        if "Sign in to confirm" in msg or "not a bot" in msg:
+            return 422, {"detail": "Platform sumber sedang memblokir server ini (deteksi bot). Coba lagi dalam beberapa menit, atau coba link lain."}
         return 422, {"detail": f"Gagal memproses link. Pastikan kontennya publik dan link valid. ({e})"}
     except Exception as e:
         return 500, {"detail": f"Kesalahan server: {e}"}

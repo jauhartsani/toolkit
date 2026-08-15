@@ -128,8 +128,24 @@
       body: JSON.stringify({ url: val, audio_only: false })
     })
       .then(function(res){
-        if(!res.ok){ return res.json().then(function(j){ throw new Error(j.detail || 'Gagal memproses link.'); }); }
-        return res.json();
+        return res.text().then(function(raw){
+          var data = null;
+          try { data = raw ? JSON.parse(raw) : null; }
+          catch(e) { data = null; }
+
+          if(!res.ok){
+            var msg = (data && data.detail)
+              ? data.detail
+              : (res.status === 504 || res.status === 502
+                  ? 'Server kelamaan memproses link ini (timeout). Coba lagi, atau pakai link video yang lebih pendek.'
+                  : 'Server mengembalikan error (kode ' + res.status + '). Coba lagi sebentar lagi.');
+            throw new Error(msg);
+          }
+          if(!data){
+            throw new Error('Server tidak mengembalikan data yang valid. Coba lagi.');
+          }
+          return data;
+        });
       })
       .then(showResult)
       .catch(function(err){ showError(err.message || 'Terjadi kesalahan. Coba lagi.'); })
