@@ -262,30 +262,39 @@ async function extractInstagram(url, { audioOnly } = {}) {
   const shortcode = extractShortcode(pathname);
 
   let sawLoginWall = false;
-  const attempts = [
-    () => viaPublicPage(cleanUrl, pathname),
-    () => viaPublicPageAsFacebot(cleanUrl, pathname),
-    () => viaEmbedPage(cleanUrl, shortcode),
-    () => viaWebInfoApi(cleanUrl, shortcode),
-    () => cobaltExtract(cleanUrl, { audioOnly }),
+  const namedAttempts = [
+    ['halaman-publik', () => viaPublicPage(cleanUrl, pathname)],
+    ['halaman-publik+facebot-ua', () => viaPublicPageAsFacebot(cleanUrl, pathname)],
+    ['halaman-embed', () => viaEmbedPage(cleanUrl, shortcode)],
+    ['web-info-api', () => viaWebInfoApi(cleanUrl, shortcode)],
+    ['cobalt', () => cobaltExtract(cleanUrl, { audioOnly })],
   ];
 
-  let lastErr;
-  for (const attempt of attempts) {
+  // Kumpulkan pesan error tiap attempt (bukan cuma yang terakhir) supaya
+  // kalau semuanya gagal, kita tahu PERSIS kenapa masing-masing gagal —
+  // ini jauh lebih berguna buat debugging daripada cuma lihat pesan error
+  // Cobalt di paling akhir (yang seringkali cuma gejala, bukan akar
+  // masalahnya — akar masalahnya ada di salah satu dari 4 metode sebelum
+  // Cobalt yang seharusnya sudah cukup tanpa perlu sampai ke Cobalt sama
+  // sekali untuk konten publik).
+  const attemptErrors = [];
+  for (const [name, attempt] of namedAttempts) {
     try {
       return await attempt();
     } catch (e) {
       if (e.message === 'LOGIN_WALL') sawLoginWall = true;
-      lastErr = e;
+      attemptErrors.push(`[${name}] ${e.message}`);
     }
   }
 
+  const detail = attemptErrors.join(' | ');
+
   if (sawLoginWall) {
     throw new Error(
-      'Instagram menampilkan halaman "log in to continue" untuk link ini alih-alih post aslinya — ini kebijakan Instagram sendiri (makin sering terjadi untuk request tanpa login) dan bukan berarti link-nya salah/private.'
+      `Instagram menampilkan halaman "log in to continue" untuk link ini di beberapa metode alih-alih post aslinya. Detail tiap metode: ${detail}`
     );
   }
-  throw lastErr || new Error('Semua metode ekstraksi Instagram gagal.');
+  throw new Error(`Semua metode ekstraksi Instagram gagal. Detail tiap metode: ${detail}`);
 }
 
 module.exports = { extractInstagram };
