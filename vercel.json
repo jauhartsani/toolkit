@@ -9,13 +9,5 @@
     "api/instagram.py": {
       "maxDuration": 30
     }
-  },
-  "redirects": [
-    {
-      "source": "/:path*",
-      "has": [{ "type": "host", "value": "www.toolkitme.my.id" }],
-      "destination": "https://toolkitme.my.id/:path*",
-      "permanent": true
-    }
-  ]
+  }
 }
