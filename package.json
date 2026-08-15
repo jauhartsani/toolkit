@@ -1,0 +1,7 @@
+{
+  "name": "toolkitme",
+  "engines": {
+    "node": "20.x"
+  },
+  "comment": "Static site + Vercel Node.js Serverless Functions (/api). Tidak ada dependency npm eksternal — semua pakai fetch/stream bawaan Node 20, jadi tidak perlu 'npm install' saat deploy."
+}

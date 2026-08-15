@@ -1,6 +1,9 @@
 {
   "functions": {
-    "api/extract.py": {
+    "api/extract.js": {
+      "maxDuration": 30
+    },
+    "api/media.js": {
       "maxDuration": 30
     }
   }
