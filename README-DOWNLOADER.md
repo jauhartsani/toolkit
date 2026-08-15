@@ -55,19 +55,59 @@ api/
 `requirements.txt` dan `README-INSTAGRAM.md` (setup cookies) sudah tidak
 relevan dan dihapus — tidak ada lagi dependency Python/yt-dlp.
 
-## Catatan penting soal Cobalt
+## Catatan penting soal Cobalt (WAJIB DIBACA — beda dari draf pertama)
 
-Fallback terakhir tiap platform (dan metode utama untuk YouTube) memanggil
-instance publik Cobalt lewat `COBALT_API_URL` (default
-`https://api.cobalt.tools/api/json`). Instance publik Cobalt kadang
-berganti alamat atau kebijakan (butuh API key, dsb.) seiring waktu — kalau
-fallback ini mulai gagal terus:
+**Update:** instance publik `api.cobalt.tools` sekarang **menolak semua
+request API dari luar** (bot protection + wajib API key/Turnstile) — ini
+kebijakan resmi tim Cobalt sejak akhir 2024, bukan bug di kode kita:
+> "hosted api instances (such as `api.cobalt.tools`) use bot protection and
+> are **not** intended to be used in other projects without explicit
+> permission." — https://github.com/imputnet/cobalt/blob/main/docs/api.md
 
-1. Cek instance publik terbaru di
-   https://github.com/imputnet/cobalt/blob/main/docs/api.md
-2. Set environment variable `COBALT_API_URL` di Vercel ke instance baru
-   (Settings → Environment Variables), atau self-host instance Cobalt
-   sendiri.
+Ini penyebab error `Cobalt merespons status 400 tanpa data` yang mungkin
+kamu lihat. Skema request/response Cobalt juga sudah berubah total dari
+versi lama (field `vCodec`/`isAudioOnly` sudah tidak berlaku, diganti
+`videoQuality`/`downloadMode`/dst) — sudah aku sesuaikan di
+`api/_lib/cobalt.js`, tapi endpoint publiknya tetap tidak bisa dipakai.
+
+**Konsekuensi:** fallback Cobalt (dipakai TikTok/Instagram/Facebook/X kalau
+metode utama gagal, dan satu-satunya metode untuk **YouTube**) butuh
+`COBALT_API_URL` menunjuk ke **instance Cobalt milikmu sendiri**. Kalau
+env var ini kosong, fungsinya sekarang gagal dengan pesan jelas (bukan
+diam-diam coba `api.cobalt.tools` dan dapat 400 seperti sebelumnya).
+
+### Cara self-host Cobalt (gratis, ~5 menit, butuh VPS/server kecil)
+
+Cobalt jalan sebagai container Docker, jadi bisa di-deploy di VPS murah
+(mis. Oracle Cloud free tier, Contabo) atau platform container gratis lain
+— **tidak bisa** di Vercel karena Vercel Functions tidak mendukung
+long-running Docker service.
+
+```bash
+mkdir cobalt && cd cobalt
+curl -O https://raw.githubusercontent.com/imputnet/cobalt/main/docker-compose.example.yml
+mv docker-compose.example.yml docker-compose.yml
+# edit docker-compose.yml: isi API_URL dengan domain/IP publik server kamu
+docker compose up -d
+```
+
+Detail lengkap: https://github.com/imputnet/cobalt/blob/main/docs/run-an-instance.md
+
+Setelah instance jalan (mis. `https://cobalt.domainmu.com`), set di Vercel:
+
+- Settings → Environment Variables → `COBALT_API_URL` = `https://cobalt.domainmu.com`
+- Redeploy project ToolkitMe.
+
+### Kalau tidak mau self-host
+
+- **TikTok, Instagram, Facebook, X** tetap bisa jalan tanpa Cobalt sama
+  sekali — mereka punya metode utama sendiri (`tikwm.com`, scraping
+  og-meta/embed, `vxtwitter.com`) yang tidak bergantung ke Cobalt. Cobalt
+  di sini cuma fallback kalau metode utama gagal.
+- **YouTube downloader akan selalu gagal** tanpa `COBALT_API_URL` terisi,
+  karena YouTube tidak punya metode scraping publik yang stabil tanpa
+  autentikasi. Kalau tidak butuh YouTube downloader jalan, biarkan saja —
+  4 downloader lain tidak terpengaruh.
 
 `tikwm.com` dan `vxtwitter.com` (metode utama TikTok & X) adalah API publik
 gratis yang sudah lama stabil, jadi kemungkinan besar tidak perlu utak-atik
