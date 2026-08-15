@@ -1,17 +1,21 @@
 /**
  * api/_lib/platforms/twitter.js
  * Urutan: vxtwitter.com API (utama) -> Cobalt.
+ * Header disamakan dengan extractor lain (UA desktop + Accept eksplisit)
+ * supaya konsisten diperlakukan sebagai request browser biasa oleh
+ * vxtwitter.com, bukan cuma header default generik.
  */
 
-const { fetchJson } = require('../http');
+const { fetchJson, browserHeaders } = require('../http');
 const { cobaltExtract } = require('../cobalt');
 
 async function viaVxTwitter(url) {
   // vxtwitter.com punya bentuk URL sama seperti twitter.com/x.com, cukup
   // ganti hostnya.
   const api = url.replace(/https?:\/\/(www\.)?(twitter|x)\.com/i, 'https://api.vxtwitter.com');
-  const { ok, data } = await fetchJson(api, {}, 12000);
-  if (!ok || !data || data.error) {
+  const { ok, status, data } = await fetchJson(api, { headers: browserHeaders('x') }, 12000);
+  if (!ok) throw new Error(`vxtwitter.com merespons status ${status}.`);
+  if (!data || data.error) {
     throw new Error((data && data.error) || 'vxtwitter.com tidak mengembalikan data valid.');
   }
 
@@ -22,8 +26,7 @@ async function viaVxTwitter(url) {
     if (typeof m === 'string') {
       return { label: `Media ${i + 1}`, url: m, filesize_approx: null };
     }
-    const label =
-      m.type === 'video' ? 'Video' : m.type === 'gif' ? 'GIF' : `Foto ${i + 1}`;
+    const label = m.type === 'video' ? 'Video' : m.type === 'gif' ? 'GIF' : `Foto ${i + 1}`;
     return { label, url: m.url, filesize_approx: null };
   });
 

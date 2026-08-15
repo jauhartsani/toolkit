@@ -1,11 +1,83 @@
 /**
  * api/_lib/platforms/tiktok.js
- * Urutan: tikwm.com API (utama, paling stabil) -> scraping langsung
- * halaman TikTok (SIGI_STATE JSON) -> Cobalt (fallback terakhir).
+ * Urutan: tikwm.com API (utama, paling stabil, sekalian hilangkan
+ * watermark) -> scraping langsung halaman TikTok -> Cobalt (fallback
+ * terakhir).
+ *
+ * Scraping langsung disamakan dengan teknik yang sudah terbukti jalan di
+ * proyek toolkit sebelumnya: resolve short-link (vt./vm.tiktok.com) dulu,
+ * cek interstitial anti-bot ("verify to continue") sebelum parsing, dan
+ * coba dua script tag berbeda (__UNIVERSAL_DATA_FOR_REHYDRATION__ lalu
+ * SIGI_STATE) karena TikTok memakai keduanya tergantung wilayah/eksperimen.
  */
 
-const { fetchJson, fetchText } = require('../http');
+const { fetchJson, fetchText, resolveRedirect, browserHeaders } = require('../http');
 const { cobaltExtract } = require('../cobalt');
+
+async function resolveShortLink(url) {
+  if (!/vt\.tiktok\.com|vm\.tiktok\.com/i.test(url)) return url;
+  return resolveRedirect(url, { headers: browserHeaders('tiktok') }, 10000);
+}
+
+// TikTok's bot-check interstitial ("verify to continue" / captcha page)
+// returns 200 with real HTML, so a status check alone won't catch it —
+// it has to be detected from page content instead.
+function looksLikeBotWall(html) {
+  return /verify to continue|secsdk-captcha|captcha_verify_container|"statusCode":10201|__tea_cache_wait/i.test(html);
+}
+
+function extractUniversalData(html) {
+  const match = html.match(/<script id="__UNIVERSAL_DATA_FOR_REHYDRATION__"[^>]*>([\s\S]*?)<\/script>/);
+  if (!match) return null;
+  try {
+    const data = JSON.parse(match[1]);
+    const scope = data?.__DEFAULT_SCOPE__ || {};
+    const detail = scope['webapp.video-detail'] || scope['webapp.photo-detail'];
+    return detail?.itemInfo?.itemStruct || null;
+  } catch {
+    return null;
+  }
+}
+
+// Legacy/alternate embed used by some TikTok surfaces/regions.
+function extractSigiState(html) {
+  const match = html.match(/<script id="SIGI_STATE"[^>]*>([\s\S]*?)<\/script>/);
+  if (!match) return null;
+  try {
+    const data = JSON.parse(match[1]);
+    const modules = data?.ItemModule || {};
+    const firstKey = Object.keys(modules)[0];
+    return firstKey ? modules[firstKey] : null;
+  } catch {
+    return null;
+  }
+}
+
+function itemToResult(item) {
+  const formats = [];
+
+  if (item.imagePost && Array.isArray(item.imagePost.images)) {
+    item.imagePost.images.forEach((img, i) => {
+      const src = img?.imageURL?.urlList?.[0];
+      if (src) formats.push({ label: `Foto ${i + 1}`, url: src, filesize_approx: null });
+    });
+  } else if (item.video) {
+    const playUrl = item.video.playAddr || item.video.downloadAddr;
+    if (playUrl) formats.push({ label: 'Video', url: playUrl, filesize_approx: null });
+  }
+  if (item.music && item.music.playUrl) {
+    formats.push({ label: 'Audio (MP3)', url: item.music.playUrl, filesize_approx: null });
+  }
+  if (!formats.length) throw new Error('Tidak ada media yang bisa diekstrak dari halaman TikTok.');
+
+  return {
+    title: item.desc || 'Video TikTok',
+    thumbnail: item.video?.cover || item.video?.originCover || null,
+    duration: item.video?.duration || null,
+    uploader: item.author?.nickname || item.author?.uniqueId || null,
+    formats,
+  };
+}
 
 async function viaTikwm(url) {
   const api = `https://www.tikwm.com/api/?url=${encodeURIComponent(url)}&hd=1`;
@@ -42,36 +114,20 @@ async function viaTikwm(url) {
 }
 
 async function viaPageScrape(url) {
-  const { ok, body } = await fetchText(url, {}, 12000);
+  const cleanUrl = await resolveShortLink(url);
+  const { ok, body } = await fetchText(cleanUrl, { headers: browserHeaders('tiktok') }, 12000);
   if (!ok || !body) throw new Error('Gagal mengambil halaman TikTok.');
 
-  const match = body.match(
-    /<script id="__UNIVERSAL_DATA_FOR_REHYDRATION__"[^>]*>([\s\S]*?)<\/script>/
-  );
-  if (!match) throw new Error('Struktur data TikTok tidak ditemukan di halaman.');
-
-  let json;
-  try {
-    json = JSON.parse(match[1]);
-  } catch {
-    throw new Error('Gagal parse data TikTok.');
+  if (looksLikeBotWall(body)) {
+    throw new Error(
+      'TikTok menampilkan halaman verifikasi anti-bot untuk request ini (lebih sering terjadi dari IP server/cloud) — bukan karena link-nya salah.'
+    );
   }
 
-  const itemStruct =
-    json?.__DEFAULT_SCOPE__?.['webapp.video-detail']?.itemInfo?.itemStruct;
-  if (!itemStruct) throw new Error('Detail video TikTok tidak ditemukan.');
+  const item = extractUniversalData(body) || extractSigiState(body);
+  if (!item) throw new Error('Struktur data video/foto TikTok tidak ditemukan di halaman.');
 
-  const video = itemStruct.video || {};
-  const playUrl = (video.playAddr) || (video.downloadAddr) || null;
-  if (!playUrl) throw new Error('Link video TikTok tidak ditemukan di halaman.');
-
-  return {
-    title: itemStruct.desc || 'Video TikTok',
-    thumbnail: video.cover || video.originCover || null,
-    duration: video.duration || null,
-    uploader: itemStruct.author?.nickname || itemStruct.author?.uniqueId || null,
-    formats: [{ label: 'Video', url: playUrl, filesize_approx: null }],
-  };
+  return itemToResult(item);
 }
 
 async function extractTiktok(url, { audioOnly } = {}) {

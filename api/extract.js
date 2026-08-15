@@ -49,9 +49,9 @@ function send(res, status, body) {
 
 function friendlyError(platform, err) {
   const msg = (err && err.message) || String(err);
-  if (platform === 'instagram' && /private|login/i.test(msg)) {
-    return 'Konten ini kemungkinan private atau butuh login. Pastikan post/reel-nya publik.';
-  }
+  // Extractor sudah kasih pesan lengkap & jelas (mis. login-wall/bot-wall
+  // yang dideteksi eksplisit) — jangan dibungkus ulang jadi generik.
+  if (msg.length > 60) return msg;
   return `Gagal memproses link. Pastikan kontennya publik dan link valid. (${msg})`;
 }
 
