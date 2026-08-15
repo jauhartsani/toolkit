@@ -24,10 +24,11 @@ async function viaVxTwitter(url) {
 
   const formats = mediaList.map((m, i) => {
     if (typeof m === 'string') {
-      return { label: `Media ${i + 1}`, url: m, filesize_approx: null };
+      return { label: `Media ${i + 1}`, type: 'video', url: m, filesize_approx: null };
     }
     const label = m.type === 'video' ? 'Video' : m.type === 'gif' ? 'GIF' : `Foto ${i + 1}`;
-    return { label, url: m.url, filesize_approx: null };
+    const type = m.type === 'photo' ? 'photo' : 'video'; // GIF X disajikan sebagai file mp4
+    return { label, type, url: m.url, filesize_approx: null };
   });
 
   return {

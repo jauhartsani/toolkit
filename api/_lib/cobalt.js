@@ -77,6 +77,7 @@ async function cobaltExtract(url, { audioOnly = false } = {}) {
       formats: [
         {
           label: audioOnly ? 'Audio' : 'Video (via Cobalt)',
+          type: audioOnly ? 'audio' : 'video',
           url: data.url,
           filesize_approx: null,
         },
@@ -90,6 +91,7 @@ async function cobaltExtract(url, { audioOnly = false } = {}) {
     return {
       formats: data.tunnel.map((tunnelUrl, i) => ({
         label: i === 0 ? (audioOnly ? 'Audio' : 'Video (via Cobalt)') : `Media ${i + 1}`,
+        type: audioOnly ? 'audio' : 'video',
         url: tunnelUrl,
         filesize_approx: null,
       })),
@@ -101,6 +103,7 @@ async function cobaltExtract(url, { audioOnly = false } = {}) {
     return {
       formats: data.picker.map((item, i) => ({
         label: item.type === 'photo' ? `Foto ${i + 1}` : `Media ${i + 1}`,
+        type: item.type === 'photo' ? 'photo' : 'video',
         url: item.url,
         filesize_approx: null,
       })),

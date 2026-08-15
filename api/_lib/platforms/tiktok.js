@@ -59,14 +59,14 @@ function itemToResult(item) {
   if (item.imagePost && Array.isArray(item.imagePost.images)) {
     item.imagePost.images.forEach((img, i) => {
       const src = img?.imageURL?.urlList?.[0];
-      if (src) formats.push({ label: `Foto ${i + 1}`, url: src, filesize_approx: null });
+      if (src) formats.push({ label: `Foto ${i + 1}`, type: 'photo', url: src, filesize_approx: null });
     });
   } else if (item.video) {
     const playUrl = item.video.playAddr || item.video.downloadAddr;
-    if (playUrl) formats.push({ label: 'Video', url: playUrl, filesize_approx: null });
+    if (playUrl) formats.push({ label: 'Video', type: 'video', url: playUrl, filesize_approx: null });
   }
   if (item.music && item.music.playUrl) {
-    formats.push({ label: 'Audio (MP3)', url: item.music.playUrl, filesize_approx: null });
+    formats.push({ label: 'Audio (MP3)', type: 'audio', url: item.music.playUrl, filesize_approx: null });
   }
   if (!formats.length) throw new Error('Tidak ada media yang bisa diekstrak dari halaman TikTok.');
 
@@ -91,16 +91,16 @@ async function viaTikwm(url) {
   // Post foto (slideshow) tidak punya video, hanya array gambar
   if (Array.isArray(d.images) && d.images.length) {
     d.images.forEach((imgUrl, i) => {
-      formats.push({ label: `Foto ${i + 1}`, url: imgUrl, filesize_approx: null });
+      formats.push({ label: `Foto ${i + 1}`, type: 'photo', url: imgUrl, filesize_approx: null });
     });
   } else {
-    if (d.play) formats.push({ label: 'Video HD (tanpa watermark)', url: d.play, filesize_approx: d.size || null });
+    if (d.play) formats.push({ label: 'Video HD (tanpa watermark)', type: 'video', url: d.play, filesize_approx: d.size || null });
     if (d.hdplay && d.hdplay !== d.play) {
-      formats.push({ label: 'Video HD Alt', url: d.hdplay, filesize_approx: d.hd_size || null });
+      formats.push({ label: 'Video HD Alt', type: 'video', url: d.hdplay, filesize_approx: d.hd_size || null });
     }
-    if (d.wmplay) formats.push({ label: 'Video (dengan watermark)', url: d.wmplay, filesize_approx: null });
+    if (d.wmplay) formats.push({ label: 'Video (dengan watermark)', type: 'video', url: d.wmplay, filesize_approx: null });
   }
-  if (d.music) formats.push({ label: 'Audio (MP3)', url: d.music, filesize_approx: null });
+  if (d.music) formats.push({ label: 'Audio (MP3)', type: 'audio', url: d.music, filesize_approx: null });
 
   if (!formats.length) throw new Error('tikwm.com tidak punya link media untuk konten ini.');
 

@@ -39,8 +39,8 @@ function buildResult(html) {
   const thumbMatch = html.match(/<meta[^>]+property="og:image"[^>]+content="([^"]+)"/);
 
   const formats = [];
-  if (hd) formats.push({ label: 'Video HD', url: hd, filesize_approx: null });
-  if (sd && sd !== hd) formats.push({ label: 'Video SD', url: sd, filesize_approx: null });
+  if (hd) formats.push({ label: 'Video HD', type: 'video', url: hd, filesize_approx: null });
+  if (sd && sd !== hd) formats.push({ label: 'Video SD', type: 'video', url: sd, filesize_approx: null });
   if (!formats.length) return null;
 
   return {

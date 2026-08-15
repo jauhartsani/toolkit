@@ -1,11 +1,17 @@
 /**
  * api/media.js — Vercel Node.js Serverless Function
- * GET /api/media?url=<direct-cdn-url>&platform=<name>&filename=<name>
+ * GET /api/media?url=<direct-cdn-url>&platform=<name>&filename=<name>&type=<video|photo|audio>
  *
  * Proxy yang menambahkan header Referer yang benar per-CDN (TikTok/
  * Instagram/Facebook/X semua memblokir hotlink tanpa referer
  * yang cocok) dan memaksa file benar-benar ke-download lewat header
  * Content-Disposition (bukan cuma kebuka di tab baru).
+ *
+ * Ekstensi file ditentukan dari Content-Type respons CDN sumber; kalau itu
+ * ambigu/kosong (mis. application/octet-stream — sering terjadi di CDN
+ * TikTok/Instagram), jatuh ke `type` hint yang dikirim extractor
+ * (video/photo/audio) supaya foto tidak pernah ke-download dengan nama
+ * .mp4 atau sebaliknya.
  */
 
 const { Readable } = require('stream');
@@ -21,7 +27,7 @@ const REFERER_BY_PLATFORM = {
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
 
-  const { url, platform, filename } = req.query || {};
+  const { url, platform, filename, type } = req.query || {};
   if (!url) {
     res.status(400).json({ detail: "Query param 'url' wajib diisi." });
     return;
@@ -45,15 +51,18 @@ module.exports = async (req, res) => {
     return;
   }
 
-  const contentType = upstream.headers.get('content-type') || 'application/octet-stream';
+  const contentType = upstream.headers.get('content-type') || '';
+  const typeHint = type === 'photo' ? 'jpg' : type === 'audio' ? 'mp3' : type === 'video' ? 'mp4' : null;
   const ext = contentType.includes('audio')
     ? 'mp3'
     : contentType.includes('image')
     ? 'jpg'
-    : 'mp4';
+    : contentType.includes('video')
+    ? 'mp4'
+    : typeHint || 'mp4';
   const safeName = (filename || 'toolkitme-download').replace(/[^a-z0-9_-]/gi, '_');
 
-  res.setHeader('Content-Type', contentType);
+  res.setHeader('Content-Type', contentType || (ext === 'jpg' ? 'image/jpeg' : ext === 'mp3' ? 'audio/mpeg' : 'video/mp4'));
   res.setHeader('Content-Disposition', `attachment; filename="${safeName}.${ext}"`);
   const len = upstream.headers.get('content-length');
   if (len) res.setHeader('Content-Length', len);

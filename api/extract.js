@@ -55,6 +55,24 @@ function friendlyError(platform, err) {
   return `Gagal memproses link. Pastikan kontennya publik dan link valid. (${msg})`;
 }
 
+// Ubah judul asli post/video jadi nama file yang aman & rapi, dipakai
+// sebagai nama file download (bukan lagi "toolkitme-instagram-1" generik).
+function slugify(text) {
+  const slug = (text || '')
+    .toString()
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 60);
+  return slug || 'download';
+}
+
+function extFor(type) {
+  return type === 'photo' ? 'jpg' : type === 'audio' ? 'mp3' : 'mp4';
+}
+
 module.exports = async (req, res) => {
   setCors(res);
 
@@ -97,7 +115,7 @@ module.exports = async (req, res) => {
 
     let formats = result.formats || [];
     if (audioOnly) {
-      const audioOnly_ = formats.filter((f) => /audio|mp3/i.test(f.label));
+      const audioOnly_ = formats.filter((f) => f.type === 'audio' || /audio|mp3/i.test(f.label));
       if (audioOnly_.length) formats = audioOnly_;
     }
     if (!formats.length) {
@@ -107,13 +125,22 @@ module.exports = async (req, res) => {
 
     // Bungkus tiap link lewat /api/media supaya referer/hotlink-block
     // teratasi dan file benar-benar ke-download (bukan cuma kebuka di tab).
-    const wrappedFormats = formats.slice(0, 6).map((f, i) => ({
-      format_id: String(i),
-      ext: audioOnly ? 'mp3' : 'mp4',
-      label: f.label,
-      filesize_approx: f.filesize_approx || null,
-      url: toProxyUrl(f.url, platform, `toolkitme-${platform}-${i + 1}`),
-    }));
+    // Nama file & ekstensi mengikuti judul asli dan JENIS media
+    // sebenarnya (video/foto/audio) per format — bukan dipukul rata mp4,
+    // supaya foto tidak pernah ke-download berekstensi .mp4 atau sebaliknya.
+    const titleSlug = slugify(result.title);
+    const wrappedFormats = formats.slice(0, 6).map((f, i) => {
+      const type = f.type || (audioOnly ? 'audio' : 'video');
+      const filenameBase = `${platform}-${titleSlug}${formats.length > 1 ? `-${i + 1}` : ''}`;
+      return {
+        format_id: String(i),
+        ext: extFor(type),
+        type,
+        label: f.label,
+        filesize_approx: f.filesize_approx || null,
+        url: toProxyUrl(f.url, platform, filenameBase, type),
+      };
+    });
 
     send(res, 200, {
       platform,

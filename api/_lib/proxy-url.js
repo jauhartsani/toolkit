@@ -4,10 +4,15 @@
  * karena TikTok/Instagram/Facebook/X memblokir hotlink tanpa
  * header Referer yang cocok. /api/media yang menambahkan Referer yang
  * benar per-platform dan memaksa file benar-benar ke-download.
+ *
+ * `type` (video/photo/audio) ikut dikirim sebagai hint — dipakai
+ * /api/media sebagai fallback penentu ekstensi file kalau header
+ * Content-Type dari CDN sumbernya ambigu/kosong.
  */
-function toProxyUrl(directUrl, platform, filename) {
+function toProxyUrl(directUrl, platform, filename, type) {
   const params = new URLSearchParams({ url: directUrl, platform });
   if (filename) params.set('filename', filename);
+  if (type) params.set('type', type);
   return `/api/media?${params.toString()}`;
 }
 
