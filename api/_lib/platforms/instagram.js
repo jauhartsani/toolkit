@@ -24,8 +24,14 @@
  * punya kemungkinan lebih besar expose link video-nya.
  */
 
-const { fetchText, browserHeaders } = require('../http');
+const { fetchText, fetchJson, browserHeaders, FACEBOT_UA, UA_BY_PLATFORM } = require('../http');
 const { cobaltExtract } = require('../cobalt');
+
+// App ID publik yang dipakai web client instagram.com sendiri di browser
+// (konstan, sudah lama tidak berubah, banyak dipakai proyek downloader
+// lain). Bukan credential rahasia — cuma penanda "request dari web app
+// resmi" yang diminta beberapa endpoint internal IG.
+const IG_WEB_APP_ID = '936619743392459';
 
 function normalizeInstagramUrl(raw) {
   const u = new URL(raw);
@@ -105,12 +111,12 @@ function extractCarouselFromJsonLd(html) {
   return media;
 }
 
-async function fetchInstagramHtml(url, referer) {
-  return fetchText(url, { headers: browserHeaders('instagram', referer) }, 12000);
+async function fetchInstagramHtml(url, referer, uaOverride) {
+  return fetchText(url, { headers: browserHeaders('instagram', referer, uaOverride) }, 12000);
 }
 
-async function viaPublicPage(url, pathname) {
-  const { ok, status, body } = await fetchInstagramHtml(url);
+async function viaPublicPage(url, pathname, uaOverride) {
+  const { ok, status, body } = await fetchInstagramHtml(url, undefined, uaOverride);
   if (!ok && status !== 200) throw new Error(`Instagram merespons status ${status}. Post mungkin private atau dihapus.`);
   if (looksLikeLoginWall(body)) throw new Error('LOGIN_WALL');
 
@@ -180,6 +186,77 @@ async function viaEmbedPage(url, shortcode) {
   throw new Error('Media tidak ditemukan di halaman embed.');
 }
 
+// Meta's own link-preview crawler (dipakai buat generate preview link di
+// Messenger/WhatsApp/FB post, dll) kadang tetap disajikan halaman post apa
+// adanya alih-alih login wall, karena IG butuh og:meta yang benar supaya
+// preview-nya jalan. Coba UA ini sebagai varian dari halaman publik biasa
+// SEBELUM masuk ke fallback yang lebih berat (embed page/Cobalt). Tidak
+// dijamin selalu berhasil — IG bisa ubah kebijakan ini kapan saja tanpa
+// pemberitahuan, jadi kalau attempt ini mulai konsisten gagal, aman untuk
+// dihapus dari urutan `attempts` di bawah tanpa mempengaruhi metode lain.
+async function viaPublicPageAsFacebot(url, pathname) {
+  return viaPublicPage(url, pathname, FACEBOT_UA);
+}
+
+// Endpoint internal yang dipakai web client instagram.com sendiri buat
+// fetch data post lewat XHR (bukan endpoint publik yang didokumentasikan
+// resmi). Masih sering bisa diakses tanpa login untuk post PUBLIK selama
+// dikirim header X-IG-App-ID yang benar + terlihat seperti XHR dari
+// instagram.com. Ini best-effort tambahan: kalau IG ubah struktur response
+// atau mulai mewajibkan cookie session di endpoint ini, attempt akan
+// gagal dengan bersih dan lanjut ke attempt berikutnya (tidak bikin
+// extractor lain ikut rusak).
+async function viaWebInfoApi(url, shortcode) {
+  if (!shortcode) throw new Error('Tidak ada shortcode untuk dipakai di web info API.');
+
+  const apiUrl = `https://www.instagram.com/api/v1/media/web_info/?media_shortcode=${encodeURIComponent(shortcode)}`;
+  const { ok, status, data } = await fetchJson(
+    apiUrl,
+    {
+      headers: {
+        'User-Agent': UA_BY_PLATFORM.instagram,
+        Accept: '*/*',
+        'X-IG-App-ID': IG_WEB_APP_ID,
+        'X-Requested-With': 'XMLHttpRequest',
+        Referer: url,
+      },
+    },
+    12000
+  );
+
+  if (!ok || !data) throw new Error(`Web info API Instagram merespons status ${status} tanpa data.`);
+
+  const item = data.items && data.items[0];
+  if (!item) throw new Error('Web info API tidak mengembalikan item media.');
+
+  const title = item.caption?.text?.slice(0, 100) || 'Post Instagram';
+  const uploader = item.user?.username || null;
+
+  if (item.video_versions && item.video_versions.length) {
+    const best = item.video_versions[0]; // sudah urut dari kualitas tertinggi
+    const thumbnail = item.image_versions2?.candidates?.[0]?.url || null;
+    return { title, thumbnail, duration: item.video_duration || null, uploader, formats: [{ label: 'Video', type: 'video', url: best.url, filesize_approx: null }] };
+  }
+
+  if (item.carousel_media && item.carousel_media.length) {
+    const formats = item.carousel_media.map((m, i) => {
+      if (m.video_versions && m.video_versions.length) {
+        return { label: `Video ${i + 1}`, type: 'video', url: m.video_versions[0].url, filesize_approx: null };
+      }
+      const img = m.image_versions2?.candidates?.[0]?.url;
+      return { label: `Foto ${i + 1}`, type: 'photo', url: img, filesize_approx: null };
+    }).filter((f) => f.url);
+    if (formats.length) return { title, thumbnail: formats[0].url, duration: null, uploader, formats };
+  }
+
+  const image = item.image_versions2?.candidates?.[0]?.url;
+  if (image) {
+    return { title, thumbnail: image, duration: null, uploader, formats: [{ label: 'Foto', type: 'photo', url: image, filesize_approx: null }] };
+  }
+
+  throw new Error('Web info API tidak punya media yang bisa dipakai di response-nya.');
+}
+
 async function extractInstagram(url, { audioOnly } = {}) {
   const { url: cleanUrl, pathname } = normalizeInstagramUrl(url);
   const shortcode = extractShortcode(pathname);
@@ -187,7 +264,9 @@ async function extractInstagram(url, { audioOnly } = {}) {
   let sawLoginWall = false;
   const attempts = [
     () => viaPublicPage(cleanUrl, pathname),
+    () => viaPublicPageAsFacebot(cleanUrl, pathname),
     () => viaEmbedPage(cleanUrl, shortcode),
+    () => viaWebInfoApi(cleanUrl, shortcode),
     () => cobaltExtract(cleanUrl, { audioOnly }),
   ];
 

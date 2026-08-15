@@ -24,9 +24,9 @@ const UA_BY_PLATFORM = {
 };
 
 /** Header "mirip browser sungguhan" untuk scraping HTML (bukan API JSON pihak ketiga). */
-function browserHeaders(platform, referer) {
+function browserHeaders(platform, referer, uaOverride) {
   return {
-    'User-Agent': UA_BY_PLATFORM[platform] || DEFAULT_UA,
+    'User-Agent': uaOverride || UA_BY_PLATFORM[platform] || DEFAULT_UA,
     'Accept-Language': 'en-US,en;q=0.9',
     Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
     'Sec-Fetch-Mode': 'navigate',
@@ -34,6 +34,15 @@ function browserHeaders(platform, referer) {
     ...(referer ? { Referer: referer } : {}),
   };
 }
+
+// UA yang dipakai Meta untuk crawler preview link mereka sendiri (link
+// preview di Messenger/WhatsApp/Facebook post, dll). Instagram (punya Meta)
+// kadang tetap menyajikan halaman post apa adanya ke UA ini alih-alih
+// login wall, karena mereka butuh og:meta yang benar supaya preview link
+// generate dengan baik. Tidak dijamin 100% (IG bisa ubah kebijakan kapan
+// saja), tapi ini teknik yang umum dipakai downloader lain sebagai extra
+// attempt sebelum menyerah ke fallback berat seperti Cobalt.
+const FACEBOT_UA = 'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)';
 
 async function fetchWithTimeout(url, opts = {}, timeoutMs = 12000) {
   const controller = new AbortController();
@@ -88,4 +97,4 @@ async function resolveRedirect(url, opts = {}, timeoutMs = 10000) {
   }
 }
 
-module.exports = { DEFAULT_UA, UA_BY_PLATFORM, browserHeaders, fetchWithTimeout, fetchText, fetchJson, resolveRedirect };
+module.exports = { DEFAULT_UA, UA_BY_PLATFORM, FACEBOT_UA, browserHeaders, fetchWithTimeout, fetchText, fetchJson, resolveRedirect };

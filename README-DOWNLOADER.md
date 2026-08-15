@@ -20,8 +20,11 @@ yang diganti.
   watermark) → scraping langsung halaman TikTok → Cobalt (fallback
   terakhir).
 - **Instagram** — halaman post publik (`og:video`/`og:image` meta) →
-  halaman embed publik (`/embed/captioned/`) → Cobalt. **Tidak butuh
-  cookies/login lagi** untuk konten publik biasa.
+  halaman post publik dengan UA crawler preview-link Meta ("Facebot",
+  sering lolos dari login wall) → halaman embed publik
+  (`/embed/captioned/`) → web info API internal instagram.com
+  (`X-IG-App-ID`) → Cobalt. **Tidak butuh cookies/login lagi** untuk
+  konten publik biasa.
 - **Facebook** — halaman embed `plugins/video.php` → scraping halaman
   watch/reel langsung → Cobalt.
 - **X (Twitter)** — `vxtwitter.com` API (utama) → Cobalt.
@@ -104,6 +107,15 @@ Setelah instance jalan (mis. `https://cobalt.domainmu.com`), set di Vercel:
   sekali — mereka punya metode utama sendiri (`tikwm.com`, scraping
   og-meta/embed, `vxtwitter.com`) yang tidak bergantung ke Cobalt. Cobalt
   di sini cuma fallback kalau metode utama gagal.
+- Khusus **Instagram**, sekarang ada 4 metode sebelum Cobalt (lihat di
+  atas). Reels yang sebelumnya langsung jatuh ke Cobalt karena halaman
+  utama & embed sama-sama kena login wall, sekarang punya 2 kesempatan
+  tambahan (UA Facebot, lalu web info API internal) sebelum benar-benar
+  butuh Cobalt. **Belum ditest langsung ke Instagram** (dikembangkan
+  tanpa akses jaringan) — kalau salah satu dari dua metode baru ini mulai
+  gagal terus (IG bisa berubah kapan saja), aman dihapus dari array
+  `attempts` di `api/_lib/platforms/instagram.js` tanpa mempengaruhi
+  metode lain.
 - **YouTube downloader akan selalu gagal** tanpa `COBALT_API_URL` terisi,
   karena YouTube tidak punya metode scraping publik yang stabil tanpa
   autentikasi. Kalau tidak butuh YouTube downloader jalan, biarkan saja —
