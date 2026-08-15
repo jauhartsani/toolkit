@@ -570,9 +570,9 @@ h1,h2,h3{font-family:var(--font-display);letter-spacing:-0.02em;margin:0;}
     }, 2600);
   }
 
-  // Ganti ini dengan alamat server backend kamu setelah di-deploy, misal:
-  // 'https://api.toolkitme.my.id'
-  var API_BASE = window.TOOLKITME_API_BASE || 'http://localhost:8000';
+  // Sekarang API-nya jalan di domain yang sama (Vercel Serverless Function
+  // di /api/extract.py) — tidak perlu URL backend terpisah lagi.
+  var API_BASE = '';
 
   var form = document.getElementById('demoDownloader');
   var hint = document.getElementById('hintText');
