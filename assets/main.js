@@ -1,0 +1,138 @@
+(function(){
+  // mobile nav
+  var toggle = document.querySelector('.nav-toggle');
+  var mnav = document.getElementById('mobile-nav');
+  toggle && toggle.addEventListener('click', function(){
+    var open = mnav.classList.toggle('open');
+    toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
+  document.querySelectorAll('.mobile-nav a').forEach(function(a){
+    a.addEventListener('click', function(){ mnav.classList.remove('open'); toggle.setAttribute('aria-expanded','false'); });
+  });
+
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // hero entrance: stagger elements marked [data-reveal] inside .hero on load
+  var heroReveals = document.querySelectorAll('.hero [data-reveal]');
+  heroReveals.forEach(function(el, i){
+    setTimeout(function(){ el.classList.add('in'); }, reduceMotion ? 0 : 90 * i + 60);
+  });
+
+  // scroll reveal for the rest of the page
+  var scrollTargets = document.querySelectorAll('[data-reveal]:not(.hero [data-reveal]), [data-reveal-scale]');
+  if('IntersectionObserver' in window){
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        if(en.isIntersecting){
+          en.target.classList.add('in');
+          io.unobserve(en.target);
+        }
+      });
+    }, {threshold:.15, rootMargin:'0px 0px -40px 0px'});
+    scrollTargets.forEach(function(t){ io.observe(t); });
+  } else {
+    scrollTargets.forEach(function(t){ t.classList.add('in'); });
+  }
+
+  // rotating placeholder examples in the hero input
+  var examples = [
+    'tiktok.com/@user/video/7291...',
+    'instagram.com/reel/C8f2x...',
+    'youtube.com/watch?v=dQw4w9...',
+    'facebook.com/watch/?v=1029...',
+    'x.com/user/status/1837...'
+  ];
+  var input = document.getElementById('urlInput');
+  var i = 0;
+  if(input && !reduceMotion){
+    setInterval(function(){
+      i = (i+1) % examples.length;
+      if(document.activeElement !== input){
+        input.setAttribute('placeholder', 'contoh: ' + examples[i]);
+      }
+    }, 2600);
+  }
+
+  // downloader form -> real API call
+  var form = document.getElementById('demoDownloader');
+  if(!form) return;
+
+  var submitBtn = document.getElementById('submitBtn');
+  var resultCard = document.getElementById('resultCard');
+  var resultError = document.getElementById('resultError');
+
+  function formatSize(bytes){
+    if(!bytes) return '';
+    var mb = bytes / (1024*1024);
+    return mb >= 1 ? mb.toFixed(1) + ' MB' : (bytes/1024).toFixed(0) + ' KB';
+  }
+
+  function setLoading(isLoading){
+    submitBtn.disabled = isLoading;
+    submitBtn.innerHTML = isLoading
+      ? '<span class="spinner"></span><span class="btn-plug-label">Memproses…</span>'
+      : '<span class="btn-plug-label">Ambil Video</span>';
+  }
+
+  function showError(msg){
+    resultCard.hidden = true;
+    resultCard.classList.remove('in');
+    resultError.hidden = false;
+    resultError.textContent = msg;
+  }
+
+  function showResult(data){
+    resultError.hidden = true;
+    document.getElementById('resultPlatform').textContent = data.platform;
+    document.getElementById('resultTitle').textContent = data.title;
+    document.getElementById('resultThumb').src = data.thumbnail || '';
+    var metaBits = [];
+    if(data.uploader) metaBits.push(data.uploader);
+    if(data.duration) metaBits.push(Math.round(data.duration) + 's');
+    document.getElementById('resultMeta').textContent = metaBits.join(' · ');
+
+    var actions = document.getElementById('resultActions');
+    actions.innerHTML = '';
+    data.formats.slice(0, 3).forEach(function(f, idx){
+      var a = document.createElement('a');
+      a.href = f.url;
+      a.target = '_blank';
+      a.rel = 'noopener';
+      a.download = '';
+      if(idx > 0) a.className = 'secondary';
+      var size = formatSize(f.filesize_approx);
+      a.textContent = 'Download ' + f.label + (size ? ' (' + size + ')' : '');
+      actions.appendChild(a);
+    });
+
+    resultCard.hidden = false;
+    // restart the entrance animation
+    resultCard.classList.remove('in');
+    void resultCard.offsetWidth;
+    resultCard.classList.add('in');
+  }
+
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    var val = input.value.trim();
+    if(!val){ input.focus(); return; }
+
+    setLoading(true);
+    resultCard.hidden = true;
+    resultCard.classList.remove('in');
+    resultError.hidden = true;
+
+    fetch('/api/extract', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: val, audio_only: false })
+    })
+      .then(function(res){
+        if(!res.ok){ return res.json().then(function(j){ throw new Error(j.detail || 'Gagal memproses link.'); }); }
+        return res.json();
+      })
+      .then(showResult)
+      .catch(function(err){ showError(err.message || 'Terjadi kesalahan. Coba lagi.'); })
+      .finally(function(){ setLoading(false); });
+  });
+})();
