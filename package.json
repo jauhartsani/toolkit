@@ -3,5 +3,8 @@
   "engines": {
     "node": "20.x"
   },
-  "comment": "Static site + Vercel Node.js Serverless Functions (/api). Tidak ada dependency npm eksternal — semua pakai fetch/stream bawaan Node 20, jadi tidak perlu 'npm install' saat deploy."
+  "dependencies": {
+    "@vercel/functions": "^3.9.3"
+  },
+  "comment": "Static site + Vercel Node.js Serverless Functions (/api). Satu-satunya dependency npm adalah @vercel/functions, dipakai oleh middleware.mjs (auto-redirect bahasa berdasarkan geolocation). Vercel otomatis 'npm install' ini saat build, tidak perlu langkah manual."
 }

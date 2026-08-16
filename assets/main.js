@@ -6,15 +6,25 @@
     var currentPath = window.location.pathname;
     var isEnglish = currentPath.startsWith('/en/');
 
+    // Simpan pilihan bahasa manual ke cookie `lang` (1 tahun) supaya
+    // middleware.mjs (auto-redirect berdasarkan geolocation) selalu
+    // menghormati pilihan ini dan tidak menimpanya lagi di kunjungan
+    // berikutnya.
+    function setLangCookie(lang) {
+      document.cookie = 'lang=' + lang + '; Path=/; Max-Age=31536000; SameSite=Lax';
+    }
+
     if (langSwitch) {
       langSwitch.textContent = isEnglish ? 'Bahasa' : 'English';
       langSwitch.addEventListener('click', function() {
         if (isEnglish) {
           // Go to Indonesian version
+          setLangCookie('id');
           var newPath = currentPath.replace('/en/', '/');
           window.location.href = newPath || '/';
         } else {
           // Go to English version
+          setLangCookie('en');
           var newPath = '/en' + (currentPath === '/' ? '/' : currentPath);
           window.location.href = newPath;
         }
@@ -25,9 +35,11 @@
       langSwitchMobile.textContent = isEnglish ? 'Bahasa' : 'English';
       langSwitchMobile.addEventListener('click', function() {
         if (isEnglish) {
+          setLangCookie('id');
           var newPath = currentPath.replace('/en/', '/');
           window.location.href = newPath || '/';
         } else {
+          setLangCookie('en');
           var newPath = '/en' + (currentPath === '/' ? '/' : currentPath);
           window.location.href = newPath;
         }
