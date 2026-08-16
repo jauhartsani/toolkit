@@ -110,7 +110,7 @@
     submitBtn.disabled = isLoading;
     submitBtn.innerHTML = isLoading
       ? '<span class="spinner"></span><span class="btn-plug-label">Memproses…</span>'
-      : '<span class="btn-plug-label">Ambil Video</span>';
+      : '<span class="btn-plug-label">Download</span>';
   }
 
   function showError(msg){
