@@ -67,7 +67,11 @@ def post_to_formats(post):
         # Carousel: banyak media (foto/video campur), iterasi tiap slide.
         for i, node in enumerate(post.get_sidecar_nodes()):
             if node.is_video:
-                formats.append({"type": "video", "url": node.video_url, "label": f"Video {i + 1}"})
+                # node.display_url tetap ada untuk slide video (cover
+                # image-nya) — dikirim sebagai "thumbnail" supaya sisi
+                # Node (instagram.js/extract.js) bisa pakai ini sebagai
+                # preview <img>, karena file video-nya sendiri bukan gambar.
+                formats.append({"type": "video", "url": node.video_url, "thumbnail": node.display_url, "label": f"Video {i + 1}"})
             else:
                 formats.append({"type": "photo", "url": node.display_url, "label": f"Foto {i + 1}"})
     elif post.is_video:

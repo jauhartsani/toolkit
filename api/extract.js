@@ -138,13 +138,30 @@ module.exports = async (req, res) => {
     const wrappedFormats = formats.slice(0, 6).map((f, i) => {
       const type = f.type || (audioOnly ? 'audio' : 'video');
       const filenameBase = `${platform}-${titleSlug}${formats.length > 1 ? `-${i + 1}` : ''}`;
+
+      // Link download sebenarnya (memaksa Save As lewat Content-Disposition: attachment).
+      const downloadUrl = toProxyUrl(f.url, platform, filenameBase, type, { download: true });
+
+      // Link preview buat <img>: kalau formatnya foto, foto itu sendiri
+      // sudah jadi thumbnail-nya (tinggal proxy versi "inline"). Kalau
+      // video/audio, file-nya sendiri BUKAN gambar, jadi butuh gambar
+      // sampul terpisah (f.thumbnail per-item kalau ada, atau fallback ke
+      // thumbnail post/video secara umum) — tanpa ini <img> akan selalu
+      // gagal render untuk item video (itu penyebab #2 thumbnail kosong,
+      // di samping bug Content-Disposition di /api/media).
+      const previewSource = type === 'photo' ? f.url : (f.thumbnail || result.thumbnail || null);
+      const previewUrl = previewSource
+        ? toProxyUrl(previewSource, platform, `${filenameBase}-thumb`, 'photo')
+        : null;
+
       return {
         format_id: String(i),
         ext: extFor(type),
         type,
         label: f.label,
         filesize_approx: f.filesize_approx || null,
-        url: toProxyUrl(f.url, platform, filenameBase, type),
+        url: downloadUrl,
+        preview: previewUrl,
       };
     });
 

@@ -262,7 +262,11 @@ async function viaWebInfoApi(url, shortcode) {
   if (item.carousel_media && item.carousel_media.length) {
     const formats = item.carousel_media.map((m, i) => {
       if (m.video_versions && m.video_versions.length) {
-        return { label: `Video ${i + 1}`, type: 'video', url: m.video_versions[0].url, filesize_approx: null };
+        // Video di dalam carousel juga selalu punya cover image sendiri
+        // (image_versions2) — dipakai sebagai thumbnail preview-nya,
+        // karena file video itu sendiri tidak bisa ditampilkan di <img>.
+        const cover = selectBestImageCandidate(m.image_versions2?.candidates || []);
+        return { label: `Video ${i + 1}`, type: 'video', url: m.video_versions[0].url, thumbnail: cover, filesize_approx: null };
       }
       // Select highest-quality candidate (largest dimensions = original aspect ratio)
       const img = selectBestImageCandidate(m.image_versions2?.candidates || []);

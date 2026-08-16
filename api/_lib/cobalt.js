@@ -105,6 +105,7 @@ async function cobaltExtract(url, { audioOnly = false } = {}) {
         label: item.type === 'photo' ? `Foto ${i + 1}` : `Media ${i + 1}`,
         type: item.type === 'photo' ? 'photo' : 'video',
         url: item.url,
+        thumbnail: item.thumb || null,
         filesize_approx: null,
       })),
     };

@@ -27,11 +27,17 @@ const REFERER_BY_PLATFORM = {
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
 
-  const { url, platform, filename, type } = req.query || {};
+  const { url, platform, filename, type, dl } = req.query || {};
   if (!url) {
     res.status(400).json({ detail: "Query param 'url' wajib diisi." });
     return;
   }
+  // dl=1 -> dipakai tombol Download (paksa Save As lewat Content-Disposition:
+  // attachment). Tanpa dl -> dipakai <img> preview thumbnail, HARUS
+  // "inline" supaya browser benar-benar menampilkan gambarnya alih-alih
+  // langsung men-download file tiap kali <img src="/api/media?..."> dipasang
+  // (ini penyebab utama thumbnail tidak pernah muncul sebelumnya).
+  const forceDownload = dl === '1';
 
   let upstream;
   try {
@@ -63,7 +69,7 @@ module.exports = async (req, res) => {
   const safeName = (filename || 'toolkitme-download').replace(/[^a-z0-9_-]/gi, '_');
 
   res.setHeader('Content-Type', contentType || (ext === 'jpg' ? 'image/jpeg' : ext === 'mp3' ? 'audio/mpeg' : 'video/mp4'));
-  res.setHeader('Content-Disposition', `attachment; filename="${safeName}.${ext}"`);
+  res.setHeader('Content-Disposition', `${forceDownload ? 'attachment' : 'inline'}; filename="${safeName}.${ext}"`);
   const len = upstream.headers.get('content-length');
   if (len) res.setHeader('Content-Length', len);
 

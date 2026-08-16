@@ -120,55 +120,68 @@
     resultError.textContent = msg;
   }
 
+  // Placeholder abu-abu (data URI, tanpa request jaringan) dipasang kalau
+  // sebuah thumbnail tetap gagal dimuat (mis. hotlink diblokir sumbernya),
+  // supaya card tidak pernah tampil kosong/rusak sama sekali.
+  var BROKEN_THUMB_SVG = 'data:image/svg+xml;utf8,' + encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">' +
+    '<rect width="200" height="200" fill="#1a1f27"/>' +
+    '<path d="M60 130l30-38 22 26 18-22 30 34H60z" fill="#3a4250"/>' +
+    '<circle cx="76" cy="76" r="12" fill="#3a4250"/></svg>'
+  );
+
   function showResult(data){
     resultError.hidden = true;
     document.getElementById('resultPlatform').textContent = data.platform;
     document.getElementById('resultTitle').textContent = data.title;
-    
-    // Render preview gallery dengan button download terintegrasi
+
+    // Grid kartu download: 1 kartu = 1 thumbnail besar + 1 tombol download
+    // di tengah bawahnya. Untuk carousel Instagram, satu kartu dibuat per
+    // item carousel (bukan cuma item pertama).
     var previewGallery = document.getElementById('resultPreviewGallery');
     previewGallery.innerHTML = '';
-    
+
     var metaBits = [];
     if(data.uploader) metaBits.push(data.uploader);
     if(data.duration) metaBits.push(Math.round(data.duration) + 's');
     document.getElementById('resultMeta').textContent = metaBits.join(' · ');
 
-    // Render preview + download untuk setiap format
-    if(data.formats && data.formats.length > 0){
-      data.formats.forEach(function(f, idx){
-        var itemRow = document.createElement('div');
-        itemRow.className = 'preview-row';
-        
-        // Preview image
-        var previewContainer = document.createElement('div');
-        previewContainer.className = 'preview-item';
-        var img = document.createElement('img');
-        img.src = f.preview || f.url || data.thumbnail || '';
-        img.alt = f.label;
-        previewContainer.appendChild(img);
-        itemRow.appendChild(previewContainer);
-        
-        // Download button
-        var btnContainer = document.createElement('div');
-        btnContainer.className = 'preview-download';
-        var downloadLink = document.createElement('a');
-        downloadLink.href = f.url;
-        downloadLink.target = '_blank';
-        downloadLink.rel = 'noopener';
-        downloadLink.download = '';
-        var size = formatSize(f.filesize_approx);
-        downloadLink.textContent = 'Download ' + f.label + (size ? ' (' + size + ')' : '');
-        btnContainer.appendChild(downloadLink);
-        itemRow.appendChild(btnContainer);
-        
-        previewGallery.appendChild(itemRow);
-      });
-    }
-    
-    // Simpan reference ke result-actions untuk compatibility (jika diperlukan)
-    var actions = document.getElementById('resultActions');
-    actions.innerHTML = '';
+    var formats = data.formats || [];
+    var isMulti = formats.length > 1;
+
+    formats.forEach(function(f){
+      var card = document.createElement('div');
+      card.className = 'dl-card';
+
+      var media = document.createElement('div');
+      media.className = 'dl-card-media';
+      var img = document.createElement('img');
+      img.src = f.preview || data.thumbnail || BROKEN_THUMB_SVG;
+      img.alt = f.label || data.title || '';
+      img.loading = 'lazy';
+      img.onerror = function(){ img.onerror = null; img.src = BROKEN_THUMB_SVG; };
+      media.appendChild(img);
+      card.appendChild(media);
+
+      if(isMulti){
+        var label = document.createElement('p');
+        label.className = 'dl-card-label';
+        label.textContent = f.label;
+        card.appendChild(label);
+      }
+
+      var size = formatSize(f.filesize_approx);
+      var downloadLink = document.createElement('a');
+      downloadLink.href = f.url;
+      downloadLink.target = '_blank';
+      downloadLink.rel = 'noopener';
+      downloadLink.download = '';
+      downloadLink.className = 'dl-btn';
+      downloadLink.textContent = 'Download' + (isMulti ? '' : ' ' + f.label) + (size ? ' (' + size + ')' : '');
+      card.appendChild(downloadLink);
+
+      previewGallery.appendChild(card);
+    });
 
     resultCard.hidden = false;
     // restart the entrance animation
