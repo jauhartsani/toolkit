@@ -1,40 +1,69 @@
 /**
  * api/_lib/platforms/facebook.js
- * Urutan: halaman embed plugins/video.php -> scraping halaman watch/reel
- * langsung -> Cobalt.
  *
- * Disamakan dengan pola yang terbukti jalan di scraper Instagram/TikTok
- * proyek toolkit sebelumnya: UA desktop + header browser lengkap (bukan UA
- * generik), resolve short-link fb.watch dulu sebelum di-scrape, dan deteksi
- * eksplisit halaman "log in to continue" Facebook (200 OK tapi bukan
- * konten videonya) supaya errornya jelas alih-alih "video tidak ditemukan".
+ * Urutan (5 attempt, dari yang paling ringan/paling sering lolos sampai
+ * yang paling berat): halaman embed plugins/video.php -> mbasic.facebook.com
+ * (versi HTML lama tanpa JS, sering tidak kena login-wall yang sama dengan
+ * www.facebook.com) -> halaman watch/reel/video langsung -> halaman
+ * watch/reel langsung dengan UA crawler preview-link Meta ("Facebot") ->
+ * Cobalt.
+ *
+ * KENAPA FACEBOOK LEBIH SERING GAGAL DIBANDING INSTAGRAM (meski satu
+ * perusahaan): domain-nya beda kebijakan. www.facebook.com jauh lebih
+ * agresif menyodorkan login-wall ke request tanpa cookie session
+ * dibanding www.instagram.com, terutama untuk Reels/Watch (video),
+ * sementara foto/link post biasa kadang masih lolos. Karena itu
+ * extractor ini disamakan dengan pola yang sudah terbukti jalan di
+ * instagram.js: banyak attempt bernama + kumpulkan pesan error tiap
+ * attempt (bukan cuma yang terakhir) supaya kalau semuanya gagal, jelas
+ * PERSIS attempt mana yang mentok di login-wall vs yang mentok karena
+ * sebab lain (link invalid, video privat, dst) — jauh lebih mudah
+ * di-debug daripada satu pesan generik "video tidak ditemukan".
  */
 
-const { fetchText, resolveRedirect, browserHeaders } = require('../http');
+const { fetchText, resolveRedirect, browserHeaders, FACEBOT_UA } = require('../http');
 const { cobaltExtract } = require('../cobalt');
 
 function unescapeUnicode(str) {
-  return str.replace(/\\u0025/g, '%').replace(/\\\//g, '/');
+  return str.replace(/\\u0025/g, '%').replace(/\\\//g, '/').replace(/\\u0026/g, '&');
 }
 
-function findSrc(html, key) {
-  const re = new RegExp(`"${key}":"([^"]+)"`);
-  const m = html.match(re);
-  return m ? unescapeUnicode(m[1]) : null;
+// Facebook menaruh link video mentah di beberapa key JSON berbeda
+// tergantung jenis halaman (watch/reel/video/plugin embed) dan sudah
+// beberapa kali berubah nama field-nya seiring waktu — cek semuanya,
+// pakai yang pertama ketemu.
+const HD_KEYS = ['playable_url_quality_hd', 'browser_native_hd_url', 'hd_src_no_ratelimit', 'hd_src'];
+const SD_KEYS = ['playable_url', 'browser_native_sd_url', 'sd_src_no_ratelimit', 'sd_src', 'video_url'];
+
+function findSrc(html, keys) {
+  for (const key of keys) {
+    const re = new RegExp(`"${key}"\\s*:\\s*"([^"]+)"`);
+    const m = html.match(re);
+    if (m) return unescapeUnicode(m[1]);
+  }
+  return null;
 }
 
 function looksLikeLoginWall(html) {
-  return /log in to (see|watch|continue)|You must log in|login_form/i.test(html);
+  return /log in to (see|watch|continue)|You must log in|login_form|id="login_form"|Lupa kata sandi\?|You'll need to log in/i.test(html);
+}
+
+// URL /share/r/{code}/ dan /share/v/{code}/ adalah format share-link baru
+// Facebook (menggantikan sebagian pola lama) — sama seperti fb.watch,
+// perlu di-resolve dulu ke URL watch/reel/video aslinya sebelum discrape,
+// karena halaman /share/ itu sendiri cuma interstitial, bukan konten video.
+function needsRedirectResolve(url) {
+  return /fb\.watch/i.test(url) || /\/share\/(r|v)\//i.test(url);
 }
 
 async function resolveShortLink(url) {
-  if (!/fb\.watch/i.test(url)) return url;
+  if (!needsRedirectResolve(url)) return url;
   return resolveRedirect(url, { headers: browserHeaders('facebook') }, 10000);
 }
 
 function buildResult(html) {
-  const hd = findSrc(html, 'browser_native_hd_url') || findSrc(html, 'hd_src');
-  const sd = findSrc(html, 'browser_native_sd_url') || findSrc(html, 'sd_src');
+  const hd = findSrc(html, HD_KEYS);
+  const sd = findSrc(html, SD_KEYS);
   const titleMatch = html.match(/<meta[^>]+property="og:title"[^>]+content="([^"]+)"/);
   const thumbMatch = html.match(/<meta[^>]+property="og:image"[^>]+content="([^"]+)"/);
 
@@ -62,9 +91,33 @@ async function viaEmbed(url) {
   return result;
 }
 
-async function viaDirectPage(url) {
+// mbasic.facebook.com adalah versi Facebook super ringan (HTML lama,
+// nyaris tanpa JS) yang aslinya dibuat untuk koneksi lambat/HP jadul.
+// Karena rendernya server-side murni (bukan React app seperti
+// www.facebook.com), dia kadang tetap menyodorkan halaman videonya apa
+// adanya ke request anonim yang di www.facebook.com sudah kena
+// login-wall. Perlu diganti dulu hostname-nya sebelum discrape.
+async function viaMbasic(url) {
+  let mbasicUrl;
+  try {
+    const u = new URL(url);
+    u.hostname = 'mbasic.facebook.com';
+    mbasicUrl = u.toString();
+  } catch {
+    throw new Error('URL Facebook tidak valid untuk dikonversi ke mbasic.');
+  }
+
+  const { ok, body } = await fetchText(mbasicUrl, { headers: browserHeaders('facebook', 'https://mbasic.facebook.com/') }, 12000);
+  if (!ok || !body) throw new Error('Gagal mengambil halaman mbasic Facebook.');
+  if (looksLikeLoginWall(body)) throw new Error('LOGIN_WALL');
+  const result = buildResult(body);
+  if (!result) throw new Error('Video tidak ditemukan di halaman mbasic.');
+  return result;
+}
+
+async function viaDirectPage(url, uaOverride) {
   const cleanUrl = await resolveShortLink(url);
-  const { ok, body } = await fetchText(cleanUrl, { headers: browserHeaders('facebook') }, 12000);
+  const { ok, body } = await fetchText(cleanUrl, { headers: browserHeaders('facebook', undefined, uaOverride) }, 12000);
   if (!ok || !body) throw new Error('Gagal mengambil halaman Facebook.');
   if (looksLikeLoginWall(body)) throw new Error('LOGIN_WALL');
   const result = buildResult(body);
@@ -72,26 +125,43 @@ async function viaDirectPage(url) {
   return result;
 }
 
-async function extractFacebook(url, { audioOnly } = {}) {
-  let sawLoginWall = false;
-  const attempts = [() => viaEmbed(url), () => viaDirectPage(url), () => cobaltExtract(url, { audioOnly })];
+// Sama seperti trik yang dipakai di instagram.js: UA crawler preview-link
+// resmi Meta ("Facebot") kadang tetap disodorkan halaman apa adanya
+// (bukan login-wall) karena Facebook butuh og:meta yang benar supaya
+// preview link di Messenger/WhatsApp/dll tetap muncul. Best-effort, bisa
+// berhenti jalan kapan saja kalau Facebook ubah kebijakannya.
+async function viaDirectPageAsFacebot(url) {
+  return viaDirectPage(url, FACEBOT_UA);
+}
 
-  let lastErr;
-  for (const attempt of attempts) {
+async function extractFacebook(url, { audioOnly } = {}) {
+  const namedAttempts = [
+    ['halaman-embed', () => viaEmbed(url)],
+    ['mbasic', () => viaMbasic(url)],
+    ['halaman-langsung', () => viaDirectPage(url)],
+    ['halaman-langsung+facebot-ua', () => viaDirectPageAsFacebot(url)],
+    ['cobalt', () => cobaltExtract(url, { audioOnly })],
+  ];
+
+  let sawLoginWall = false;
+  const attemptErrors = [];
+  for (const [name, attempt] of namedAttempts) {
     try {
       return await attempt();
     } catch (e) {
       if (e.message === 'LOGIN_WALL') sawLoginWall = true;
-      lastErr = e;
+      attemptErrors.push(`[${name}] ${e.message === 'LOGIN_WALL' ? 'halaman menampilkan login-wall' : e.message}`);
     }
   }
 
+  const detail = attemptErrors.join(' | ');
+
   if (sawLoginWall) {
     throw new Error(
-      'Facebook menampilkan halaman "log in to continue" untuk video ini — video mungkin tidak sepenuhnya publik, atau Facebook membatasi akses tanpa login untuk konten ini.'
+      `Facebook menampilkan halaman "log in to continue" untuk video ini di beberapa metode — video mungkin tidak sepenuhnya publik, atau Facebook membatasi akses tanpa login untuk konten ini. Detail tiap metode: ${detail}`
     );
   }
-  throw lastErr || new Error('Semua metode ekstraksi Facebook gagal.');
+  throw new Error(`Semua metode ekstraksi Facebook gagal. Detail tiap metode: ${detail}`);
 }
 
 module.exports = { extractFacebook };

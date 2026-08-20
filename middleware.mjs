@@ -9,8 +9,11 @@
 // setupLanguageSwitcher), pilihan itu disimpan di cookie `lang` dan SELALU
 // dihormati — middleware ini tidak akan menimpa pilihan manual tsb.
 //
-// /blog/* sengaja TIDAK disentuh karena kontennya cuma ada versi Indonesia
-// (belum ada /en/blog/), jadi tidak ada halaman EN untuk dialihkan.
+// /blog/* dan /en/blog/* sengaja TIDAK disentuh middleware ini — setiap
+// artikel blog sudah punya URL sendiri per bahasa (dan link hreflang timbal
+// balik lewat scripts/build-blog.js), jadi pengunjung yang datang dari hasil
+// pencarian harus tetap mendarat di URL persis yang mereka klik, bukan
+// dialihkan otomatis berdasarkan geolokasi.
 
 import { geolocation, next } from '@vercel/functions';
 
