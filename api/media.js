@@ -15,7 +15,7 @@
  */
 
 const { Readable } = require('stream');
-const { DEFAULT_UA } = require('./_lib/http');
+const { DEFAULT_UA, UA_BY_PLATFORM } = require('./_lib/http');
 
 const REFERER_BY_PLATFORM = {
   tiktok: 'https://www.tiktok.com/',
@@ -39,11 +39,18 @@ module.exports = async (req, res) => {
   // (ini penyebab utama thumbnail tidak pernah muncul sebelumnya).
   const forceDownload = dl === '1';
 
+  // UA per-platform disamakan dengan yang dipakai extractor pas scraping
+  // (lihat _lib/http.js) — bukan cuma UA generik. Beberapa CDN (terutama
+  // fbcdn.net milik Facebook) memvalidasi User-Agent selain Referer saat
+  // menyajikan gambar/video, jadi UA generik yang tidak konsisten dengan
+  // Referer platform-nya kadang tetap kena block walau Referer-nya sudah
+  // benar — ini penyebab thumbnail Facebook sering gagal tampil sekalipun
+  // og:image-nya sendiri berhasil ditemukan extractor.
   let upstream;
   try {
     upstream = await fetch(url, {
       headers: {
-        'User-Agent': DEFAULT_UA,
+        'User-Agent': UA_BY_PLATFORM[platform] || DEFAULT_UA,
         Referer: REFERER_BY_PLATFORM[platform] || '',
       },
     });

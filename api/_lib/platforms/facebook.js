@@ -61,11 +61,42 @@ async function resolveShortLink(url) {
   return resolveRedirect(url, { headers: browserHeaders('facebook') }, 10000);
 }
 
+// Ambil isi meta tag Open Graph TANPA asumsi urutan attribute — beberapa
+// halaman Facebook (terutama mbasic/embed) render sebagai
+// `content="..." property="og:image"` (content DULUAN), bukan urutan
+// "normal" `property="..." content="..."`. Regex lama cuma cek satu
+// urutan, jadi og:image sering ke-skip diam-diam dan thumbnail jadi
+// kosong padahal videonya sendiri berhasil ketemu — inilah penyebab
+// utama "video ke-download tapi thumbnail-nya nggak keluar".
+function metaContent(html, property) {
+  const re1 = new RegExp(`<meta[^>]+property=["']${property}["'][^>]+content=["']([^"']+)["']`, 'i');
+  const re2 = new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]+property=["']${property}["']`, 'i');
+  const m = html.match(re1) || html.match(re2);
+  return m ? unescapeUnicode(m[1]) : null;
+}
+
+// Fallback kalau og:image sama sekali tidak ada di halaman (umum terjadi
+// di mbasic.facebook.com, yang HTML-nya minim dan jarang menaruh meta
+// Open Graph sama sekali karena memang tidak didesain untuk link
+// preview). Beberapa halaman FB tetap menaruh cover image di data JSON
+// inline dengan salah satu key ini.
+const THUMB_JSON_KEYS = ['thumbnailImage', 'preferred_thumbnail', 'thumbnailUrl', 'preview_image'];
+function findThumbInJson(html) {
+  for (const key of THUMB_JSON_KEYS) {
+    // Cocokkan baik bentuk "key":"https://..." maupun "key":{"uri":"https://..."}
+    const direct = html.match(new RegExp(`"${key}"\\s*:\\s*"([^"]+)"`));
+    if (direct) return unescapeUnicode(direct[1]);
+    const nested = html.match(new RegExp(`"${key}"\\s*:\\s*\\{[^}]*"uri"\\s*:\\s*"([^"]+)"`));
+    if (nested) return unescapeUnicode(nested[1]);
+  }
+  return null;
+}
+
 function buildResult(html) {
   const hd = findSrc(html, HD_KEYS);
   const sd = findSrc(html, SD_KEYS);
-  const titleMatch = html.match(/<meta[^>]+property="og:title"[^>]+content="([^"]+)"/);
-  const thumbMatch = html.match(/<meta[^>]+property="og:image"[^>]+content="([^"]+)"/);
+  const title = metaContent(html, 'og:title');
+  const thumbnail = metaContent(html, 'og:image') || findThumbInJson(html);
 
   const formats = [];
   if (hd) formats.push({ label: 'Video HD', type: 'video', url: hd, filesize_approx: null });
@@ -73,8 +104,8 @@ function buildResult(html) {
   if (!formats.length) return null;
 
   return {
-    title: titleMatch ? titleMatch[1] : 'Video Facebook',
-    thumbnail: thumbMatch ? thumbMatch[1] : null,
+    title: title || 'Video Facebook',
+    thumbnail,
     duration: null,
     uploader: null,
     formats,
