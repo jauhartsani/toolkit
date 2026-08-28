@@ -14,13 +14,19 @@
 // balik lewat scripts/build-blog.js), jadi pengunjung yang datang dari hasil
 // pencarian harus tetap mendarat di URL persis yang mereka klik, bukan
 // dialihkan otomatis berdasarkan geolokasi.
+//
+// /compress/, /pdf/, /qr/, /convert/, /text/, /calc/, /instagram/, dan
+// /tools.html juga TIDAK disentuh — halaman-halaman tools ini belum punya
+// versi /en/ tandingannya, jadi kalau tetap di-redirect berdasarkan geo,
+// pengunjung dari luar Indonesia akan diarahkan ke URL /en/... yang tidak
+// ada (404). Semua tools ini bahasa Indonesia saja untuk saat ini.
 
 import { geolocation, next } from '@vercel/functions';
 
 export const config = {
-  // Jalan di semua path KECUALI: api routes, assets statis, blog, dan file
-  // infra (favicon/robots/sitemap).
-  matcher: ['/((?!api/|assets/|blog/|favicon\\.ico|robots\\.txt|sitemap\\.xml).*)'],
+  // Jalan di semua path KECUALI: api routes, assets statis, blog, halaman
+  // tools (belum ada versi EN), dan file infra (favicon/robots/sitemap).
+  matcher: ['/((?!api/|assets/|blog/|compress/|pdf/|qr/|convert/|text/|calc/|instagram/|tools\\.html|favicon\\.ico|robots\\.txt|sitemap\\.xml).*)'],
 };
 
 function getCookie(request, name) {
