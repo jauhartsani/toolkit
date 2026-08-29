@@ -152,7 +152,7 @@
         if(!val){ var ctx = canvas.getContext('2d'); ctx.clearRect(0,0,canvas.width,canvas.height); return; }
         var size = parseInt(document.getElementById('qrSize').value, 10);
         var level = document.getElementById('qrLevel').value;
-        QRCode.toCanvas(canvas, val, { width: size, errorCorrectionLevel: level, margin: 1, color: { dark: '#0B0E12', light: '#FFFFFF' } });
+        QRCode.toCanvas(canvas, val, { width: size, errorCorrectionLevel: level, margin: 1, color: { dark: '#0B0E12', light: '#FFFFFF' } }, function(){ canvas.removeAttribute('style'); });
       }
 
       ['qrText','wifiSsid','wifiPass','wifiEnc','qrSize','qrLevel'].forEach(function(id){

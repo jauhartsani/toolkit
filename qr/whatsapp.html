@@ -118,7 +118,9 @@
         var ctx = canvas.getContext('2d');
         if(!link){ ctx.clearRect(0,0,canvas.width,canvas.height); return; }
         var size = parseInt(document.getElementById('qrSize').value, 10);
-        QRCode.toCanvas(canvas, link, { width: size, errorCorrectionLevel: 'M', margin: 1, color: { dark: '#0B0E12', light: '#FFFFFF' } });
+        QRCode.toCanvas(canvas, link, { width: size, errorCorrectionLevel: 'M', margin: 1, color: { dark: '#0B0E12', light: '#FFFFFF' } }, function(){
+          canvas.removeAttribute('style');
+        });
       }
       ['waNumber','waMsg','qrSize'].forEach(function(id){
         document.getElementById(id).addEventListener('input', render);
